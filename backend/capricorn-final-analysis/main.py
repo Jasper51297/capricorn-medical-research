@@ -141,18 +141,18 @@ A brief paragraph summarizing the case.
 
 Following the table, provide a concise interpretation of the actionable events, focusing on their clinical implications, potential impact on treatment decisions, and overall prognosis. Highlight any synergistic or conflicting interactions between events.
 
-### 3. Treatment Recommendations
+### 3. Treatment Options
 | Event | Treatment | Evidence (PMID) | Evidence Summary | Previous Response | Warnings |
 |-------|-----------|----------------|------------------|-------------------|-----------|
 [Fill with treatment details, one row per recommendation]
 
-IMPORTANT FOR TREATMENT RECOMMENDATIONS:
+IMPORTANT FOR TREATMENT OPTIONS:
 - You MUST include at least one PMID from the provided articles in the Evidence column for EACH recommendation
 - DO NOT use "N/A" in the Evidence column - instead, find the most relevant article(s) from the provided list
 - If multiple articles support a recommendation, include all relevant PMIDs
 - If direct evidence is limited but an article suggests the approach, still cite that PMID and indicate it's a suggestion
 - For every treatment recommendation, you MUST trace it back to specific information in at least one of the articles
-- Format PMIDs as clickable links: [PMID: 12345](https://pubmed.ncbi.nlm.nih.gov/12345/)
+- Format PMIDs as clickable links with publication year: [PMID: 12345 (2023)](https://pubmed.ncbi.nlm.nih.gov/12345/)
 
 After the table, offer a succinct clinical perspective on the recommended treatments. Address the strength of evidence, potential benefits and risks, and how these treatments align with the patient's specific genetic and clinical profile. Discuss any notable drug interactions or sequencing considerations.
 
@@ -168,14 +168,14 @@ IMPORTANT FOR MULTI-TARGET OPPORTUNITIES:
   * Suggests the combination might be effective
   * Provides a scientific rationale for the combination
   * Discusses similar combinations in related contexts
-- Format PMIDs as clickable links: [PMID: 12345](https://pubmed.ncbi.nlm.nih.gov/12345/)
+- Format PMIDs as clickable links with publication year: [PMID: 12345 (2023)](https://pubmed.ncbi.nlm.nih.gov/12345/)
 - DO NOT use "N/A" in the Evidence column
 
 Following this table, provide a brief analysis of the multi-target approach. Evaluate the potential synergistic effects, discuss the rationale behind combining therapies, and comment on the anticipated efficacy and safety profile of these combinations in the context of this specific case.
 
 IMPORTANT FORMATTING NOTES:
 1. Use proper markdown table syntax with | separators and aligned headers
-2. Format PMID links as [PMID: 12345](https://pubmed.ncbi.nlm.nih.gov/12345/)
+2. Format PMID links as clickable links with publication year: [PMID: 12345 (2023)](https://pubmed.ncbi.nlm.nih.gov/12345/)
 3. For multiple items in a cell, use bullet points:
    * First item
    * Second item

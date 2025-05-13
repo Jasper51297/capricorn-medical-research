@@ -243,7 +243,7 @@ const ChatContainer = ({
       </div>
       <div>
         <span className="text-xs text-gray-500 italic block mb-4">
-          For professional medical use only. Results require physician interpretation and clinical judgment. Capricorn is a decision support tool, not a substitute for professional medical advice.
+          For professional medical use only. Articles dated to PubMed Central Dec 2024 annual baseline. Results require physician interpretation and clinical judgment. Capricorn is a decision support tool, not a substitute for professional medical advice.
         </span>
       </div>
       <PrintButton content={msg.analysis} />
