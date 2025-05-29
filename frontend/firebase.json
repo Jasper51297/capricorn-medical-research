@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "capricorn-medical-research",
+    "site": "capricorn-medical-research-dev",
     "public": "build",
     "ignore": [
       "firebase.json",

@@ -372,3 +372,36 @@ export const sendFeedback = async (feedbackData) => {
     throw new Error(`Failed to send feedback: ${error.message}`);
   }
 };
+
+/**
+ * Processes a PDF lab report to extract genomic information
+ * @param {string} pdfBase64 - The base64 encoded PDF content
+ * @returns {Promise<Object>} - A promise that resolves to the extracted genomic data
+ */
+export const processLabPDF = async (pdfBase64) => {
+  try {
+    const response = await fetch('https://capricorn-process-lab-934163632848.us-central1.run.app', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ pdf_data: pdfBase64 }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    if (result.success) {
+      return result.data;
+    } else {
+      throw new Error(result.error || 'Failed to process PDF');
+    }
+  } catch (error) {
+    console.error('Error processing lab PDF:', error);
+    throw new Error(`Failed to process lab PDF: ${error.message}`);
+  }
+};

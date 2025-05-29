@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { redactSensitiveInfo } from '../../utils/api';
+import { redactSensitiveInfo, processLabPDF } from '../../utils/api';
 import LoadingSpinner from '../LoadingSpinner';
 import { presetCaseNotes, presetLabResults } from '../../data/presetData';
-import { Mic, MicOff, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Mic, MicOff, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
 import useDebounce from '../../hooks/useDebounce';
 
 // Define the SpeechRecognition interface
@@ -44,9 +44,12 @@ const CaseInputSection = ({
   const [focusedInput, setFocusedInput] = useState('caseNotes');
   const [localCaseNotes, setLocalCaseNotes] = useState('');
   const [localLabResults, setLocalLabResults] = useState('');
+  const [isProcessingPDF, setIsProcessingPDF] = useState(false);
+  const [pdfFileName, setPdfFileName] = useState('');
   const caseNotesRef = useRef(null);
   const labResultsRef = useRef(null);
   const recognitionRef = useRef(null);
+  const fileInputRef = useRef(null);
   const debouncedCaseNotes = useDebounce(localCaseNotes, 2000);
   const debouncedLabResults = useDebounce(localLabResults, 2000);
 
@@ -316,8 +319,74 @@ const CaseInputSection = ({
     }
   };
 
+  const handleFileSelect = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.type !== 'application/pdf') {
+      setError('Please select a PDF file');
+      return;
+    }
+
+    setPdfFileName(file.name);
+    setError(null);
+    setIsProcessingPDF(true);
+
+    try {
+      // Read file as base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          // Extract base64 data (remove data:application/pdf;base64, prefix)
+          const base64Data = e.target.result.split(',')[1];
+          
+          // Call the backend to process the PDF
+          const extractedData = await processLabPDF(base64Data);
+          
+          // Set the lab results with the extracted text data
+          setLocalLabResults(extractedData);
+          setLabResults(extractedData);
+          setShowLabResults(true);
+          
+          // Adjust textarea height after content is set
+          setTimeout(() => {
+            if (labResultsRef.current) {
+              adjustTextareaHeight(labResultsRef.current);
+            }
+          }, 0);
+          
+        } catch (error) {
+          console.error('Error processing lab:', error);
+          setError(`Failed to process PDF: ${error.message}`);
+        } finally {
+          setIsProcessingPDF(false);
+        }
+      };
+
+      reader.onerror = () => {
+        setError('Failed to read PDF file');
+        setIsProcessingPDF(false);
+      };
+
+      reader.readAsDataURL(file);
+    } catch (error) {
+      console.error('Error reading file:', error);
+      setError('Failed to read PDF file');
+      setIsProcessingPDF(false);
+    }
+
+    // Reset file input
+    event.target.value = '';
+  };
+
   const toggleLabResults = () => {
-    setShowLabResults(prev => !prev);
+    // When clicking "Add lab results", trigger file upload
+    if (!showLabResults) {
+      fileInputRef.current?.click();
+    } else {
+      setShowLabResults(false);
+      setPdfFileName('');
+    }
   };
 
   if (!showCaseInput) {
@@ -325,15 +394,25 @@ const CaseInputSection = ({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-3xl p-6 pb-5 w-full min-w-[600px] flex flex-col transition-all duration-300 ease-in-out max-h-[75vh] overflow-hidden shadow-sm hover:shadow-md relative mb-8 px-8">
-      {isRedacting && (
+    <>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf"
+        onChange={handleFileSelect}
+        style={{ display: 'none' }}
+      />
+      
+      <div className="bg-white border border-gray-200 rounded-3xl p-6 pb-5 w-full min-w-[600px] flex flex-col transition-all duration-300 ease-in-out max-h-[75vh] overflow-hidden shadow-sm hover:shadow-md relative mb-8 px-8">
+      {(isRedacting || isProcessingPDF) && (
         <div className="absolute top-0 left-0 right-0 bg-blue-100 bg-opacity-90 text-blue-700 px-2 py-1 text-xs z-10">
           <div className="flex items-center">
             <svg className="animate-spin h-3 w-3 mr-1 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            Redacting sensitive information...
+            {isProcessingPDF ? 'Processing lab report...' : 'Redacting sensitive information...'}
           </div>
         </div>
       )}
@@ -437,6 +516,7 @@ const CaseInputSection = ({
         </div>
       )}
     </div>
+    </>
   );
 };
 
