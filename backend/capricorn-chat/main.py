@@ -22,7 +22,7 @@ import json
 import os
 
 # Initialize Firestore client
-db = firestore.Client()
+db = firestore.Client(database="capricorn-eu")
 
 from google.genai import types
 

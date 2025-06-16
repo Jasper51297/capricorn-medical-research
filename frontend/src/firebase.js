@@ -45,7 +45,7 @@ const app = initializeApp(firebaseConfig);
 
 // Get Auth and Firestore instances
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = getFirestore(app, "capricorn-eu");
 
 // Helper functions for chat operations
 // In firebase.js
