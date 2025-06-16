@@ -18,6 +18,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import { presetCaseNotes, presetLabResults } from '../../data/presetData';
 import { Mic, MicOff, AlertTriangle, ArrowRight, Upload } from 'lucide-react';
 import useDebounce from '../../hooks/useDebounce';
+import LabInputModal from '../Modal/LabInputModal';
 
 // Define the SpeechRecognition interface
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -46,6 +47,7 @@ const CaseInputSection = ({
   const [localLabResults, setLocalLabResults] = useState('');
   const [isProcessingPDF, setIsProcessingPDF] = useState(false);
   const [pdfFileName, setPdfFileName] = useState('');
+  const [showLabInputChoiceModal, setShowLabInputChoiceModal] = useState(false);
   const caseNotesRef = useRef(null);
   const labResultsRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -380,13 +382,33 @@ const CaseInputSection = ({
   };
 
   const toggleLabResults = () => {
-    // When clicking "Add lab results", trigger file upload
+    // When clicking "Add lab results", show modal with options
     if (!showLabResults) {
-      fileInputRef.current?.click();
+      setShowLabInputChoiceModal(true);
     } else {
       setShowLabResults(false);
       setPdfFileName('');
     }
+  };
+
+  const handleModalUploadClick = () => {
+    setShowLabInputChoiceModal(false);
+    fileInputRef.current?.click();
+  };
+
+  const handleModalTextClick = () => {
+    setShowLabInputChoiceModal(false);
+    setShowLabResults(true);
+    // Focus on the lab results textarea after it's shown
+    setTimeout(() => {
+      if (labResultsRef.current) {
+        labResultsRef.current.focus();
+      }
+    }, 100);
+  };
+
+  const handleModalClose = () => {
+    setShowLabInputChoiceModal(false);
   };
 
   if (!showCaseInput) {
@@ -516,6 +538,14 @@ const CaseInputSection = ({
         </div>
       )}
     </div>
+    
+    {/* Lab Input Choice Modal */}
+    <LabInputModal
+      isOpen={showLabInputChoiceModal}
+      onClose={handleModalClose}
+      onUploadClick={handleModalUploadClick}
+      onTextClick={handleModalTextClick}
+    />
     </>
   );
 };
