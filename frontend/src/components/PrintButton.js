@@ -142,7 +142,7 @@ const PrintButton = ({ content, title = 'Analysis Results' }) => {
           </div>
           <div class="disclaimer">
             For professional medical use only. Results require physician interpretation and clinical judgment. 
-            Capricorn is a decision support tool, not a substitute for professional medical advice.
+            Capricorn is an advanced search tool, not a substitute for professional medical advice.
           </div>
           <button onclick="window.print(); window.close();" style="margin-top: 20px; padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; cursor: pointer;">
             Print
