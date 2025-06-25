@@ -24,37 +24,60 @@ The application consists of:
 
 ### 1. Firestore Database Setup
 
-1. Create a Firestore database:
-   ```bash
-   # Replace with your values
-   export PROJECT_ID="YOUR_GCP_PROJECT_ID"
-   export DATABASE_ID="YOUR_DATABASE_ID"  # e.g., "capricorn-prod"
-   export DATABASE_LOCATION="YOUR_LOCATION"  # e.g., "europe-west1" or "us-central"
-   
-   gcloud firestore databases create \
-     --database=$DATABASE_ID \
-     --location=$DATABASE_LOCATION \
-     --project=$PROJECT_ID
-   ```
+Create a Firestore database for storing chat conversations.
 
-2. Create Firestore security rules:
-   ```javascript
-   // firestore.rules
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       // Allow authenticated users to read/write their own chats
-       match /chats/{userId}/conversations/{document=**} {
-         allow read, write: if request.auth != null && request.auth.uid == userId;
-       }
-     }
-   }
-   ```
+**Prerequisites:**
+- Install gcloud CLI: https://cloud.google.com/sdk/docs/install
+- Authenticate: `gcloud auth login`
+- Set project: `gcloud config set project YOUR_GCP_PROJECT_ID`
 
-3. Deploy the security rules:
-   ```bash
-   firebase deploy --only firestore:rules
-   ```
+**1. Create the database:**
+```bash
+# Set your configuration values
+export PROJECT_ID="YOUR_GCP_PROJECT_ID"
+export DATABASE_ID="YOUR_DATABASE_ID"  # e.g., "capricorn-prod", "capricorn-dev"
+export DATABASE_LOCATION="YOUR_LOCATION"  # See locations below
+
+# Create the Firestore database
+gcloud firestore databases create \
+  --database=$DATABASE_ID \
+  --location=$DATABASE_LOCATION \
+  --project=$PROJECT_ID
+```
+
+**Choose a location:**
+See available locations at: https://firebase.google.com/docs/firestore/locations
+- Multi-region options: `nam5` (US), `eur3` (Europe)
+- Regional options: `us-central1`, `europe-west1`, etc.
+
+**2. After creating the database, update the frontend configuration:**
+```bash
+cd frontend
+cp .env.example .env
+# Edit .env and set:
+# REACT_APP_FIREBASE_DATABASE_ID=your-database-id
+```
+
+**Note**: Backend configuration will be handled in the next section using the setup script.
+
+**3. Create Firestore security rules:**
+```javascript
+// Create a file named firestore.rules in your project root
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow authenticated users to read/write their own chats
+    match /chats/{userId}/conversations/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+**4. Deploy the security rules:**
+```bash
+firebase deploy --only firestore:rules
+```
 
 ### 2. Cloud Functions Setup
 
@@ -62,35 +85,29 @@ Each Cloud Function needs to be deployed with the appropriate environment variab
 
 #### 2.1 Create Backend Configuration
 
-Create a `.env.yaml` file for each Cloud Function (add to .gitignore):
+Use the provided setup script to create all `.env.yaml` files automatically:
 
-```yaml
-# backend/capricorn-chat/.env.yaml
-PROJECT_ID: "YOUR_GCP_PROJECT_ID"
-DATABASE_ID: "YOUR_DATABASE_ID"
-LOCATION: "us-central1"
-
-# backend/capricorn-redact-sensitive-info/.env.yaml
-PROJECT_ID: "YOUR_GCP_PROJECT_ID"
-DLP_PROJECT_ID: "YOUR_GCP_PROJECT_ID"  # Can be same as PROJECT_ID
-
-# backend/capricorn-process-lab/.env.yaml
-PROJECT_ID: "YOUR_GCP_PROJECT_ID"
-LOCATION: "global"
-
-# backend/capricorn-retrieve-full-articles/.env.yaml
-GENAI_PROJECT_ID: "YOUR_GCP_PROJECT_ID"
-BIGQUERY_PROJECT_ID: "YOUR_BIGQUERY_PROJECT_ID"  # Project containing PubMed data
-LOCATION: "us-central1"
-
-# backend/capricorn-final-analysis/.env.yaml
-GENAI_PROJECT_ID: "YOUR_GCP_PROJECT_ID"
-BIGQUERY_PROJECT_ID: "YOUR_BIGQUERY_PROJECT_ID"
-LOCATION: "us-central1"
-
-# backend/capricorn-feedback/.env.yaml
-SENDGRID_API_KEY: "YOUR_SENDGRID_API_KEY"
+```bash
+# Run the setup script
+./setup-backend-config.sh
 ```
+
+The script will prompt you for:
+- GCP Project ID
+- Firestore Database ID
+- Cloud Functions region
+- BigQuery Project ID (optional, defaults to GCP Project ID)
+- SendGrid API key (optional)
+
+This creates `.env.yaml` files for all Cloud Functions:
+- `backend/capricorn-chat/.env.yaml`
+- `backend/capricorn-redact-sensitive-info/.env.yaml`
+- `backend/capricorn-process-lab/.env.yaml`
+- `backend/capricorn-retrieve-full-articles/.env.yaml`
+- `backend/capricorn-final-analysis/.env.yaml`
+- `backend/capricorn-feedback/.env.yaml`
+
+**Note**: The `.env.yaml` files are already in `.gitignore` to prevent committing sensitive data.
 
 #### 2.2 Deploy Cloud Functions
 
@@ -281,69 +298,6 @@ gcloud services enable \
   bigquery.googleapis.com \
   --project=$PROJECT_ID
 ```
-
-### 7. Update Backend Code with Configuration
-
-Update the backend Python files to use environment variables:
-
-1. **capricorn-chat/main.py**:
-   ```python
-   # Replace hardcoded database
-   db = firestore.Client(database=os.environ.get('DATABASE_ID', 'capricorn-eu'))
-   
-   # Replace hardcoded project
-   client = genai.Client(
-       vertexai=True,
-       project=os.environ.get('PROJECT_ID'),
-       location=os.environ.get('LOCATION', 'us-central1'),
-   )
-   ```
-
-2. **capricorn-retrieve-full-articles/main.py**:
-   ```python
-   # Replace hardcoded projects
-   client = genai.Client(
-       vertexai=True,
-       project=os.environ.get('GENAI_PROJECT_ID'),
-       location=os.environ.get('LOCATION', 'us-central1'),
-   )
-   bq_client = bigquery.Client(project=os.environ.get('BIGQUERY_PROJECT_ID'))
-   ```
-
-## Configuration Summary
-
-### Required Environment Variables
-
-| Service | Variable | Description | Example |
-|---------|----------|-------------|---------|
-| All | PROJECT_ID | Your GCP project ID | my-project-123 |
-| Firestore | DATABASE_ID | Firestore database name | capricorn-prod |
-| Firestore | DATABASE_LOCATION | Database region | europe-west1 |
-| BigQuery | BIGQUERY_PROJECT_ID | Project with PubMed data | pubmed-data-project |
-| Cloud Functions | REGION | Deployment region | us-central1 |
-| SendGrid | SENDGRID_API_KEY | SendGrid API key | SG.xxx... |
-
-### Data Compliance Notes
-
-- **Database Location**: Choose based on data residency requirements
-  - Multi-region options: `nam5` (US), `eur3` (EU)
-  - Single-region options: `us-central1`, `europe-west1`, etc.
-- **PHI/PII Handling**: DLP API automatically redacts sensitive information
-- **FedRAMP Compliance**: Ensure all services are configured for FedRAMP if required
-
-## Troubleshooting
-
-1. **Firestore Connection Issues**:
-   - Verify database ID matches in frontend and backend
-   - Check IAM permissions for service accounts
-
-2. **BigQuery Access Issues**:
-   - Ensure service account has BigQuery Data Viewer role
-   - Verify dataset names and project IDs
-
-3. **Cloud Function Errors**:
-   - Check function logs: `gcloud functions logs read FUNCTION_NAME`
-   - Verify all environment variables are set
 
 ## Support
 
