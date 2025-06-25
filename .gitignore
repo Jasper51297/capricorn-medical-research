@@ -1,2 +1,14 @@
 backend/archive/*
 pubmed-search-tester/
+
+# Backend configuration files
+backend/*/.env.yaml
+backend/*/.env
+
+# Service account keys
+*.json
+bigquery-service-account.json
+
+# Firebase configuration
+firestore.rules
+.firebaserc

@@ -20,15 +20,16 @@ from google.genai import types
 import json
 import re
 from datetime import datetime
+import os
 
 # Initialize DLP client
 dlp_client = dlp_v2.DlpServiceClient()
 
-# Initialize Gemini client
+# Initialize Gemini client with environment variables
 client = genai.Client(
     vertexai=True,
-    project="gemini-med-lit-review",
-    location="us-central1",
+    project=os.environ.get('PROJECT_ID', 'gemini-med-lit-review'),
+    location=os.environ.get('LOCATION', 'us-central1'),
 )
 
 def get_info_types():
@@ -335,8 +336,8 @@ def redact_sensitive_info(request):
         original_print = builtins.print
         builtins.print = capture_print
 
-        # Redact sensitive information
-        project_id = "gemini-med-lit-review"  # Your GCP project ID
+        # Redact sensitive information using project ID from environment
+        project_id = os.environ.get('DLP_PROJECT_ID', os.environ.get('PROJECT_ID', 'gemini-med-lit-review'))
         redacted_text = deidentify_content(project_id, text)
 
         # Restore original print function

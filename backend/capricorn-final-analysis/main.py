@@ -20,20 +20,21 @@ from google.genai import types
 from google.cloud import bigquery
 import json
 import logging
+import os
 from datetime import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Initialize clients
-vertexai.init(project="gemini-med-lit-review")
+# Initialize clients with environment variables
+vertexai.init(project=os.environ.get('GENAI_PROJECT_ID', 'gemini-med-lit-review'))
 genai_client = genai.Client(
     vertexai=True,
-    project="gemini-med-lit-review",
-    location="us-central1",
+    project=os.environ.get('GENAI_PROJECT_ID', 'gemini-med-lit-review'),
+    location=os.environ.get('LOCATION', 'us-central1'),
 )
-bq_client = bigquery.Client(project="playground-439016")
+bq_client = bigquery.Client(project=os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016'))
 
 def get_full_articles(analyzed_articles):
     """Retrieve full article content from BigQuery using PMIDs."""
@@ -42,13 +43,14 @@ def get_full_articles(analyzed_articles):
     pmids_str = ', '.join([f"'{pmid}'" for pmid in pmids])
     
     # Query to get full articles by joining pmid_embed_nonzero with pmid_metadata
+    project_id = os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016')
     query = f"""
     SELECT 
         metadata.PMID,
         base.name as PMCID,  -- This is the PMCID
         base.content
-    FROM `playground-439016.pmid_uscentral.pmid_embed_nonzero` base
-    JOIN `playground-439016.pmid_uscentral.pmid_metadata` metadata
+    FROM `{project_id}.pmid_uscentral.pmid_embed_nonzero` base
+    JOIN `{project_id}.pmid_uscentral.pmid_metadata` metadata
     ON base.name = metadata.AccessionID  -- Join on PMCID (AccessionID is PMCID)
     WHERE UPPER(metadata.PMID) IN ({','.join([f"'{pmid.upper()}'" for pmid in pmids])})
     """

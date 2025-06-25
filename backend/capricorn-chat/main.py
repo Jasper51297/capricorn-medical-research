@@ -21,16 +21,16 @@ from google.cloud import firestore
 import json
 import os
 
-# Initialize Firestore client
-db = firestore.Client(database="capricorn-eu")
+# Initialize Firestore client with environment variable
+db = firestore.Client(database=os.environ.get('DATABASE_ID', 'capricorn-eu'))
 
 from google.genai import types
 
-# Initialize Gemini client
+# Initialize Gemini client with environment variables
 client = genai.Client(
     vertexai=True,
-    project="gemini-med-lit-review",
-    location="us-central1",
+    project=os.environ.get('PROJECT_ID', 'gemini-med-lit-review'),
+    location=os.environ.get('LOCATION', 'us-central1'),
 )
 
 def get_chat_history(user_id, chat_id):

@@ -19,6 +19,7 @@ from google.genai import types
 import base64
 import json
 import logging
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -57,11 +58,11 @@ def process_lab(request):
             logger.error(f"Invalid base64 data: {e}")
             return jsonify({'error': f'Invalid base64 data: {e}'}), 400, headers
 
-        # Initialize GenAI Client
+        # Initialize GenAI Client with environment variables
         client = genai.Client(
             vertexai=True,
-            project="gemini-med-lit-review",
-            location="global",
+            project=os.environ.get('PROJECT_ID', 'gemini-med-lit-review'),
+            location=os.environ.get('LOCATION', 'global'),
         )
 
         # Create the PDF document part
