@@ -22,6 +22,10 @@ if [ -z "$BIGQUERY_PROJECT_ID" ]; then
     BIGQUERY_PROJECT_ID=$PROJECT_ID
 fi
 
+# Prompt for BigQuery dataset names
+read -p "Enter your PMID dataset name (e.g., pmid_uscentral): " PMID_DATASET
+read -p "Enter your Journal dataset name (e.g., journal_rank): " JOURNAL_DATASET
+
 # Optional: Prompt for SendGrid API key
 echo ""
 echo "SendGrid API key is required for the feedback function."
@@ -63,6 +67,8 @@ cat > backend/capricorn-retrieve-full-articles/.env.yaml << EOF
 GENAI_PROJECT_ID: "$PROJECT_ID"
 BIGQUERY_PROJECT_ID: "$BIGQUERY_PROJECT_ID"
 LOCATION: "$REGION"
+PMID_DATASET: "$PMID_DATASET"
+JOURNAL_DATASET: "$JOURNAL_DATASET"
 EOF
 echo "✓ Created backend/capricorn-retrieve-full-articles/.env.yaml"
 

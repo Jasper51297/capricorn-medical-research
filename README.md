@@ -31,13 +31,26 @@ Create a Firestore database for storing chat conversations.
 - Authenticate: `gcloud auth login`
 - Set project: `gcloud config set project YOUR_GCP_PROJECT_ID`
 
-**1. Create the database:**
+**1. Set project variables and enable APIs:**
 ```bash
 # Set your configuration values
 export PROJECT_ID="YOUR_GCP_PROJECT_ID"
 export DATABASE_ID="YOUR_DATABASE_ID"  # e.g., "capricorn-prod", "capricorn-dev"
 export DATABASE_LOCATION="YOUR_LOCATION"  # See locations below
 
+# Enable required APIs
+gcloud services enable \
+  firestore.googleapis.com \
+  cloudfunctions.googleapis.com \
+  cloudbuild.googleapis.com \
+  dlp.googleapis.com \
+  aiplatform.googleapis.com \
+  bigquery.googleapis.com \
+  --project=$PROJECT_ID
+```
+
+**2. Create the database:**
+```bash
 # Create the Firestore database
 gcloud firestore databases create \
   --database=$DATABASE_ID \
@@ -97,6 +110,8 @@ The script will prompt you for:
 - Firestore Database ID
 - Cloud Functions region
 - BigQuery Project ID (optional, defaults to GCP Project ID)
+- PMID dataset name (e.g., pubmed)
+- Journal dataset name (e.g., journal)
 - SendGrid API key (optional)
 
 This creates `.env.yaml` files for all Cloud Functions:
@@ -121,7 +136,7 @@ cd backend
 cd capricorn-redact-sensitive-info
 gcloud functions deploy redact-sensitive-info \
   --gen2 \
-  --runtime=python311 \
+  --runtime=python312 \
   --region=YOUR_REGION \
   --source=. \
   --entry-point=redact_sensitive_info \
@@ -133,64 +148,131 @@ gcloud functions deploy redact-sensitive-info \
 cd ../capricorn-process-lab
 gcloud functions deploy process-lab \
   --gen2 \
-  --runtime=python311 \
+  --runtime=python313 \
   --region=YOUR_REGION \
   --source=. \
   --entry-point=process_lab \
   --trigger-http \
   --allow-unauthenticated \
+  --cpu=4 \
+  --memory=4Gi \
+  --timeout=3600s \
+  --max-instances=100 \
+  --min-instances=1 \
+  --concurrency=80 \
   --env-vars-file=.env.yaml
 
 # Retrieve Full Articles
 cd ../capricorn-retrieve-full-articles
 gcloud functions deploy retrieve-full-articles \
   --gen2 \
-  --runtime=python311 \
+  --runtime=python312 \
   --region=YOUR_REGION \
   --source=. \
   --entry-point=retrieve_full_articles \
   --trigger-http \
   --allow-unauthenticated \
-  --memory=1GB \
-  --timeout=540s \
+  --cpu=6 \
+  --memory=8Gi \
+  --timeout=3600s \
+  --max-instances=100 \
+  --concurrency=1 \
   --env-vars-file=.env.yaml
 
 # Final Analysis
 cd ../capricorn-final-analysis
 gcloud functions deploy final-analysis \
   --gen2 \
-  --runtime=python311 \
+  --runtime=python312 \
   --region=YOUR_REGION \
   --source=. \
   --entry-point=final_analysis \
   --trigger-http \
   --allow-unauthenticated \
-  --memory=1GB \
+  --cpu=6 \
+  --memory=8Gi \
+  --timeout=3600s \
+  --max-instances=100 \
+  --concurrency=1 \
   --env-vars-file=.env.yaml
 
 # Chat
 cd ../capricorn-chat
 gcloud functions deploy chat \
   --gen2 \
-  --runtime=python311 \
+  --runtime=python312 \
   --region=YOUR_REGION \
   --source=. \
   --entry-point=chat \
   --trigger-http \
   --allow-unauthenticated \
+  --cpu=8 \
+  --memory=8Gi \
+  --timeout=3600s \
+  --max-instances=100 \
+  --concurrency=1 \
   --env-vars-file=.env.yaml
 
 # Feedback
 cd ../capricorn-feedback
 gcloud functions deploy send-feedback-email \
   --gen2 \
-  --runtime=python311 \
+  --runtime=python39 \
   --region=YOUR_REGION \
   --source=. \
   --entry-point=send_feedback_email \
   --trigger-http \
   --allow-unauthenticated \
+  --cpu=1 \
+  --memory=512Mi \
+  --timeout=300s \
+  --max-instances=100 \
+  --concurrency=80 \
   --env-vars-file=.env.yaml
+```
+
+#### 2.3 Collect Function URLs and Update Frontend
+
+After deploying all functions, collect their URLs and automatically update the frontend:
+
+```bash
+# Navigate back to project root
+cd ../..
+
+# Set your region (must match deployment region from section 2.2)
+export REGION=YOUR_REGION
+
+# Collect all function URLs
+echo "Collecting Cloud Function URLs..."
+REDACT_URL=$(gcloud functions describe redact-sensitive-info --region=$REGION --format='value(serviceConfig.uri)')
+PROCESS_LAB_URL=$(gcloud functions describe process-lab --region=$REGION --format='value(serviceConfig.uri)')
+RETRIEVE_ARTICLES_URL=$(gcloud functions describe retrieve-full-articles --region=$REGION --format='value(serviceConfig.uri)')
+FINAL_ANALYSIS_URL=$(gcloud functions describe final-analysis --region=$REGION --format='value(serviceConfig.uri)')
+CHAT_URL=$(gcloud functions describe chat --region=$REGION --format='value(serviceConfig.uri)')
+FEEDBACK_URL=$(gcloud functions describe send-feedback-email --region=$REGION --format='value(serviceConfig.uri)')
+
+# Save URLs to file for reference
+{
+  echo "# Cloud Function URLs - Generated $(date)"
+  echo "REDACT_URL=$REDACT_URL"
+  echo "PROCESS_LAB_URL=$PROCESS_LAB_URL"
+  echo "RETRIEVE_ARTICLES_URL=$RETRIEVE_ARTICLES_URL"
+  echo "FINAL_ANALYSIS_URL=$FINAL_ANALYSIS_URL"
+  echo "CHAT_URL=$CHAT_URL"
+  echo "FEEDBACK_URL=$FEEDBACK_URL"
+} > function-urls.txt
+
+# Update api.js with the correct URLs
+# Note: The API_BASE_URL is used for multiple functions, so we'll use the Chat function's base URL
+API_BASE_URL=$(echo $CHAT_URL | sed 's|/chat$||')
+
+# Update the hardcoded URLs in api.js
+sed -i.bak "s|const API_BASE_URL = .*|const API_BASE_URL = '$API_BASE_URL';|" frontend/src/utils/api.js
+sed -i.bak "s|https://capricorn-feedback-[^']*|$FEEDBACK_URL|" frontend/src/utils/api.js
+sed -i.bak "s|https://capricorn-process-lab-[^']*|$PROCESS_LAB_URL|" frontend/src/utils/api.js
+
+echo "✓ Updated frontend/src/utils/api.js with Cloud Function URLs"
+echo "✓ Saved URLs to function-urls.txt for reference"
 ```
 
 ### 3. BigQuery Setup
@@ -206,11 +288,17 @@ The application requires BigQuery datasets with PubMed article embeddings and me
      --project=$PROJECT_ID
    ```
 
-2. Grant BigQuery permissions:
+2. Grant required permissions:
    ```bash
+   # Grant BigQuery permissions
    gcloud projects add-iam-policy-binding $BIGQUERY_PROJECT_ID \
      --member="serviceAccount:capricorn-bigquery-reader@$PROJECT_ID.iam.gserviceaccount.com" \
      --role="roles/bigquery.dataViewer"
+   
+   # Grant Vertex AI permissions (required for Gemini embeddings model access)
+   gcloud projects add-iam-policy-binding $PROJECT_ID \
+     --member="serviceAccount:capricorn-bigquery-reader@$PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/aiplatform.user"
    ```
 
 3. Create and download service account key:
@@ -226,49 +314,63 @@ The application requires BigQuery datasets with PubMed article embeddings and me
 1. Contact the GPS-RIT team at: **gps-rit@google.com**
 2. Follow the setup guide: https://docs.google.com/document/d/1__5TOLrIEoUbiksQdNVKUR5hQW5E0o9nOM-WBiHyzjo/edit?tab=t.0
 
-The following datasets and tables are required:
-```
-YOUR_BIGQUERY_PROJECT.pmid_uscentral.pmid_embed_nonzero
-YOUR_BIGQUERY_PROJECT.pmid_uscentral.pmid_metadata
-YOUR_BIGQUERY_PROJECT.journal_rank.scimagojr_2023
-```
-
 ### 4. Frontend Configuration
 
-1. Create environment configuration:
-   ```bash
-   cd frontend
-   
-   # Create .env file (already in .gitignore)
-   cat > .env << EOF
-   REACT_APP_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
-   REACT_APP_FIREBASE_AUTH_DOMAIN=YOUR_PROJECT_ID.firebaseapp.com
-   REACT_APP_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
-   REACT_APP_FIREBASE_STORAGE_BUCKET=YOUR_PROJECT_ID.appspot.com
-   REACT_APP_FIREBASE_MESSAGING_SENDER_ID=YOUR_MESSAGING_SENDER_ID
-   REACT_APP_FIREBASE_APP_ID=YOUR_APP_ID
-   REACT_APP_FIREBASE_DATABASE_ID=YOUR_DATABASE_ID
-   EOF
-   ```
+#### 4.1 Get Firebase Configuration Values
 
-2. Update API endpoints in `src/utils/api.js`:
+1. **Access Firebase Console**:
+   - Go to [Firebase Console](https://console.firebase.google.com)
+   - Create a new project or select your existing GCP project
+   - If creating new, link it to your GCP project when prompted
+
+2. **Find Your Configuration**:
+   - Click the gear icon ⚙️ → "Project settings"
+   - Scroll down to "Your apps" section
+   - If no app exists, click "Add app" → Choose Web (</>)
+   - Register your app with a nickname (e.g., "capricorn-medical")
+   - You'll see your Firebase configuration:
    ```javascript
-   // Replace with your Cloud Function URLs
-   const API_ENDPOINTS = {
-     redactPII: 'https://YOUR_REGION-YOUR_PROJECT_ID.cloudfunctions.net/redact-sensitive-info',
-     processLab: 'https://YOUR_REGION-YOUR_PROJECT_ID.cloudfunctions.net/process-lab',
-     retrieveArticles: 'https://YOUR_REGION-YOUR_PROJECT_ID.cloudfunctions.net/retrieve-full-articles',
-     finalAnalysis: 'https://YOUR_REGION-YOUR_PROJECT_ID.cloudfunctions.net/final-analysis',
-     chat: 'https://YOUR_REGION-YOUR_PROJECT_ID.cloudfunctions.net/chat',
-     feedback: 'https://YOUR_REGION-YOUR_PROJECT_ID.cloudfunctions.net/send-feedback-email'
+   const firebaseConfig = {
+     apiKey: "...",              // → REACT_APP_FIREBASE_API_KEY
+     authDomain: "...",          // → REACT_APP_FIREBASE_AUTH_DOMAIN
+     projectId: "...",           // → REACT_APP_FIREBASE_PROJECT_ID
+     storageBucket: "...",       // → REACT_APP_FIREBASE_STORAGE_BUCKET
+     messagingSenderId: "...",   // → REACT_APP_FIREBASE_MESSAGING_SENDER_ID
+     appId: "..."                // → REACT_APP_FIREBASE_APP_ID
    };
    ```
 
-3. Update Firebase configuration to use the database ID:
-   ```javascript
-   // In src/firebase.js
-   export const db = getFirestore(app, process.env.REACT_APP_FIREBASE_DATABASE_ID);
-   ```
+#### 4.2 Create Environment Configuration
+
+```bash
+cd frontend
+
+# Create .env file (already in .gitignore)
+cat > .env << EOF
+REACT_APP_FIREBASE_API_KEY=YOUR_FIREBASE_API_KEY
+REACT_APP_FIREBASE_AUTH_DOMAIN=YOUR_PROJECT_ID.firebaseapp.com
+REACT_APP_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
+REACT_APP_FIREBASE_STORAGE_BUCKET=YOUR_PROJECT_ID.appspot.com
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=YOUR_MESSAGING_SENDER_ID
+REACT_APP_FIREBASE_APP_ID=YOUR_APP_ID
+REACT_APP_FIREBASE_DATABASE_ID=YOUR_DATABASE_ID
+EOF
+```
+
+Replace the placeholders with your actual values from the Firebase configuration. Use the `DATABASE_ID` you created in section 1 (e.g., "capricorn-prod")
+
+#### 4.3 Update Firebase Hosting Configuration
+
+Update `firebase.json` with your project ID:
+```bash
+# Get the project ID from the .env file
+PROJECT_ID=$(grep REACT_APP_FIREBASE_PROJECT_ID .env | cut -d '=' -f2)
+
+# Update firebase.json with the project ID
+sed -i.bak "s|\"site\": \".*\"|\"site\": \"$PROJECT_ID\"|" firebase.json
+
+echo "✓ Updated firebase.json with site name: $PROJECT_ID"
+```
 
 ### 5. Deploy Frontend
 
@@ -281,26 +383,6 @@ YOUR_BIGQUERY_PROJECT.journal_rank.scimagojr_2023
 
 2. Deploy to Firebase Hosting:
    ```bash
-   firebase init hosting  # Select your project and 'build' as public directory
-   firebase deploy --only hosting
+   # Deploy using the existing firebase.json configuration
+   firebase deploy --only hosting --project $PROJECT_ID
    ```
-
-### 6. Enable Required APIs
-
-Enable the following APIs in your GCP project:
-```bash
-gcloud services enable \
-  firestore.googleapis.com \
-  cloudfunctions.googleapis.com \
-  cloudbuild.googleapis.com \
-  dlp.googleapis.com \
-  aiplatform.googleapis.com \
-  bigquery.googleapis.com \
-  --project=$PROJECT_ID
-```
-
-## Support
-
-For BigQuery dataset setup assistance, contact: **gps-rit@google.com**
-
-For application issues, please submit feedback through the application's feedback feature.
