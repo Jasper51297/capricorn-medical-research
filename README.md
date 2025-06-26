@@ -229,6 +229,40 @@ gcloud functions deploy send-feedback-email \
   --max-instances=100 \
   --concurrency=80 \
   --env-vars-file=.env.yaml
+
+# Extract Disease
+cd ../pubmed-search-tester-extract-disease
+gcloud functions deploy extract-disease \
+  --gen2 \
+  --runtime=python312 \
+  --region=YOUR_REGION \
+  --source=. \
+  --entry-point=extract_disease \
+  --trigger-http \
+  --allow-unauthenticated \
+  --cpu=2 \
+  --memory=1Gi \
+  --timeout=600s \
+  --max-instances=100 \
+  --concurrency=1 \
+  --env-vars-file=.env.yaml
+
+# Extract Events
+cd ../pubmed-search-tester-extract-events
+gcloud functions deploy extract-events \
+  --gen2 \
+  --runtime=python312 \
+  --region=YOUR_REGION \
+  --source=. \
+  --entry-point=extract_events \
+  --trigger-http \
+  --allow-unauthenticated \
+  --cpu=2 \
+  --memory=1Gi \
+  --timeout=600s \
+  --max-instances=100 \
+  --concurrency=1 \
+  --env-vars-file=.env.yaml
 ```
 
 #### 2.3 Collect Function URLs and Update Frontend
@@ -250,6 +284,8 @@ RETRIEVE_ARTICLES_URL=$(gcloud functions describe retrieve-full-articles --regio
 FINAL_ANALYSIS_URL=$(gcloud functions describe final-analysis --region=$REGION --format='value(serviceConfig.uri)')
 CHAT_URL=$(gcloud functions describe chat --region=$REGION --format='value(serviceConfig.uri)')
 FEEDBACK_URL=$(gcloud functions describe send-feedback-email --region=$REGION --format='value(serviceConfig.uri)')
+EXTRACT_DISEASE_URL=$(gcloud functions describe extract-disease --region=$REGION --format='value(serviceConfig.uri)')
+EXTRACT_EVENTS_URL=$(gcloud functions describe extract-events --region=$REGION --format='value(serviceConfig.uri)')
 
 # Save URLs to file for reference
 {
@@ -260,6 +296,8 @@ FEEDBACK_URL=$(gcloud functions describe send-feedback-email --region=$REGION --
   echo "FINAL_ANALYSIS_URL=$FINAL_ANALYSIS_URL"
   echo "CHAT_URL=$CHAT_URL"
   echo "FEEDBACK_URL=$FEEDBACK_URL"
+  echo "EXTRACT_DISEASE_URL=$EXTRACT_DISEASE_URL"
+  echo "EXTRACT_EVENTS_URL=$EXTRACT_EVENTS_URL"
 } > function-urls.txt
 
 # Update api.js with the correct URLs

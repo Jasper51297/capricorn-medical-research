@@ -96,6 +96,22 @@ EOF
     echo "✓ Created backend/capricorn-feedback/.env.yaml"
 fi
 
+# Create pubmed-search-tester-extract-disease/.env.yaml
+cat > backend/pubmed-search-tester-extract-disease/.env.yaml << EOF
+# Environment variables for pubmed-search-tester-extract-disease Cloud Function
+PROJECT_ID: "$PROJECT_ID"
+LOCATION: "$REGION"
+EOF
+echo "✓ Created backend/pubmed-search-tester-extract-disease/.env.yaml"
+
+# Create pubmed-search-tester-extract-events/.env.yaml
+cat > backend/pubmed-search-tester-extract-events/.env.yaml << EOF
+# Environment variables for pubmed-search-tester-extract-events Cloud Function
+PROJECT_ID: "$PROJECT_ID"
+LOCATION: "$REGION"
+EOF
+echo "✓ Created backend/pubmed-search-tester-extract-events/.env.yaml"
+
 echo ""
 echo "=================================================="
 echo "Configuration files created successfully!"
