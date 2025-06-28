@@ -21,7 +21,7 @@ const TopBar = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setS
     <div className="h-16 bg-[#FF7F00] text-white flex items-center px-4 justify-between">
       <div>
         <span className="font-bold">Capricorn</span>{' '}
-        <span className="font-light">| Medical Research</span>
+        <span className="font-light">| Medical Research (Demo)</span>
       </div>
       <Header 
         user={user}
