@@ -41,14 +41,14 @@ const UserMenu = ({ user, firstName, handleLogout, showUserMenu, setShowUserMenu
             className="w-8 h-8 rounded-full"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-white text-[#FF7F00] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-white text-[#1e3a8a] flex items-center justify-center">
             {(firstName || user?.displayName || 'U')[0].toUpperCase()}
           </div>
         )}
       </div>
       {showUserMenu && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-30">
-          <div className="px-4 py-2 text-sm text-[#FF7F00]">Welcome, {firstName || user?.displayName}</div>
+          <div className="px-4 py-2 text-sm text-[#1e3a8a] font-semibold">Welcome, {firstName || user?.displayName}</div>
           <div className="px-4 py-2 text-sm text-gray-600">{user?.email}</div>
           <button
             onClick={() => {
@@ -56,7 +56,7 @@ const UserMenu = ({ user, firstName, handleLogout, showUserMenu, setShowUserMenu
               handleLogout();
               setShowUserMenu(false);
             }}
-            className="block w-full text-left px-4 py-2 text-sm text-[#FF7F00] hover:bg-orange-100"
+            className="block w-full text-left px-4 py-2 text-sm text-[#1e3a8a] hover:bg-blue-50"
           >
             Sign out
           </button>

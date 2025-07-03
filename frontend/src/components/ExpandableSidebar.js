@@ -68,8 +68,8 @@ const ChatHistoryItem = ({ chat, isActive, onClick, onRename, onDelete }) => {
 
   return (
     <div 
-      className={`group flex items-center justify-between w-full text-left px-3 py-2 text-sm hover:bg-surface-600 rounded-md ${
-        isActive ? 'bg-surface-600' : ''
+      className={`group flex items-center justify-between w-full text-left px-3 py-2 text-sm hover:bg-[#2c5282]/30 rounded-md ${
+        isActive ? 'bg-[#2c5282]/30' : ''
       }`}
     >
       <button
@@ -88,7 +88,7 @@ const ChatHistoryItem = ({ chat, isActive, onClick, onRename, onDelete }) => {
             e.stopPropagation();
             setIsRenaming(true);
           }}
-          className="p-1 hover:bg-surface-800 rounded text-white"
+          className="p-1 hover:bg-[#2c5282]/50 rounded text-white"
         >
           <Pencil size={14} />
         </button>
@@ -97,7 +97,7 @@ const ChatHistoryItem = ({ chat, isActive, onClick, onRename, onDelete }) => {
             e.stopPropagation();
             onDelete(chat.id);
           }}
-          className="p-1 hover:bg-surface-800 rounded text-red-400"
+          className="p-1 hover:bg-[#2c5282]/50 rounded text-red-400"
         >
           <Trash2 size={14} />
         </button>
@@ -189,11 +189,11 @@ const handleNewChat = async () => {
 };
 
   return (
-    <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-surface-700 shadow-lg transition-all duration-300 ease-in-out flex z-90 ${isExpanded ? 'w-64' : 'w-12'}`}>
+    <div className={`fixed top-16 left-0 h-[calc(100vh-4rem)] bg-[#1a365d] shadow-lg transition-all duration-300 ease-in-out flex z-90 ${isExpanded ? 'w-64' : 'w-12'}`}>
       {/* Toggle button */}
       <button
         onClick={() => onToggle(!isExpanded)}
-        className="absolute right-0 top-4 translate-x-full bg-surface-700 p-2 rounded-r-lg shadow-lg hover:bg-surface-600 transition-colors text-white"
+        className="absolute right-0 top-4 translate-x-full bg-[#1a365d] p-2 rounded-r-lg shadow-lg hover:bg-[#2c5282] transition-colors text-white"
         aria-label={isExpanded ? 'Collapse sidebar' : 'Expand sidebar'}
       >
         {isExpanded ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
@@ -210,7 +210,7 @@ const handleNewChat = async () => {
               <>
                 <button
                   onClick={handleNewChat}
-                  className="flex items-center w-full text-left px-3 py-2 text-sm text-white hover:bg-surface-600 rounded-md"
+                  className="flex items-center w-full text-left px-3 py-2 text-sm text-white hover:bg-[#2c5282]/30 rounded-md"
                 >
                   <Plus size={16} className="mr-2" />
                   Start New Chat

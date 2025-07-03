@@ -23,7 +23,7 @@ const Header = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setS
   const showLoginButton = !isAuthenticated || isAnonymous;
 
   return (
-    <header className="h-16 p-4 flex justify-end items-center bg-[#FF7F00] text-white z-100 relative">
+    <header className="h-16 p-4 flex justify-end items-center bg-transparent text-white z-100 relative">
       <div className="flex items-center">
         {showLoginButton ? (
           <div className="relative z-20">
@@ -32,7 +32,7 @@ const Header = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setS
                 console.log('[USER_MENU_DEBUG] Header: Login button clicked');
                 handleLogin();
               }}
-              className="mr-4 px-4 py-2 text-white hover:text-orange-200 transition-colors"
+              className="mr-4 px-4 py-2 text-white hover:text-blue-100 transition-colors"
             >
               Login
             </button>

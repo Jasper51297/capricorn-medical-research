@@ -60,7 +60,7 @@ const WelcomeText = ({ show, firstName }) => {
           animate={{ opacity: isVisible ? 0.6 : 0, x: isVisible ? '0%' : '100%' }}
           transition={{ duration: 0.5, ease: 'easeInOut' }}
         >
-          <circle cx="20" cy="20" r="15" fill="#FF6B00" fillOpacity="0.6" />
+          <circle cx="20" cy="20" r="15" fill="#1e3a8a" fillOpacity="0.6" />
         </motion.svg>
         {`${greeting}${firstName ? `, ${firstName}` : ''}`}
       </div>
