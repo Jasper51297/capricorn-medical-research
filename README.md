@@ -4,7 +4,7 @@ A medical research application that uses AI to analyze pediatric oncology cases 
 
 ## Architecture Overview
 
-![Architecture Diagram](capricorn_architecture.png)
+![Architecture Diagram](visuals/capricorn_architecture.png)
 
 The application consists of:
 - **Frontend**: React application hosted on Firebase
