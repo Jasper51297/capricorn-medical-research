@@ -164,7 +164,6 @@ const CaseInputSection = ({
     setLocalCaseNotes(newText);
     setCaseNotes(newText);
     setHasInput(newText.trim().length > 0);
-    adjustTextareaHeight(caseNotesRef.current);
   };
 
   const handleCaseNotesFocus = () => {
@@ -227,7 +226,6 @@ const CaseInputSection = ({
     const newText = e.target.value;
     setLocalLabResults(newText);
     setLabResults(newText);
-    adjustTextareaHeight(labResultsRef.current);
   };
 
   const handleLabResultsFocus = () => {
@@ -240,32 +238,132 @@ const CaseInputSection = ({
     }
   };
 
+  const calculateMaxHeight = () => {
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    
+    // Get footer height (approximately 72px based on py-4 and content)
+    const footerHeight = 72;
+    
+    // Get the position of the CaseInputSection
+    const containerElement = document.querySelector('.case-input-container');
+    const containerTop = containerElement ? containerElement.getBoundingClientRect().top : 200;
+    
+    // Calculate available space (viewport height - container top - footer - safety margin)
+    const safetyMargin = 40; // Extra margin to ensure no overlap
+    const availableHeight = viewportHeight - containerTop - footerHeight - safetyMargin;
+    
+    // Apply responsive constraints
+    let maxHeightRatio;
+    if (viewportWidth < 640) {
+      // Mobile: more restrictive to prevent footer overlap
+      maxHeightRatio = 0.25; // 25% of viewport
+    } else if (viewportWidth < 1024) {
+      // Tablet
+      maxHeightRatio = 0.35; // 35% of viewport
+    } else {
+      // Desktop
+      maxHeightRatio = 0.45; // 45% of viewport
+    }
+    
+    // Return the smaller of the two constraints
+    return Math.min(availableHeight * 0.7, viewportHeight * maxHeightRatio);
+  };
+
+  const calculateContainerMaxHeight = () => {
+    const viewportHeight = window.innerHeight;
+    const footerHeight = 72;
+    const containerElement = document.querySelector('.case-input-container');
+    const containerTop = containerElement ? containerElement.getBoundingClientRect().top : 200;
+    
+    // Calculate max height for the entire container
+    const safetyMargin = 40;
+    const maxContainerHeight = viewportHeight - containerTop - footerHeight - safetyMargin;
+    
+    // Cap at 75vh as a maximum
+    return Math.min(maxContainerHeight, viewportHeight * 0.75);
+  };
+
   const adjustTextareaHeight = (textarea) => {
     if (!textarea) return;
     
     textarea.style.height = 'auto';
     const newHeight = textarea.scrollHeight + 4;
-    const maxHeight = window.innerHeight * 0.35;
+    const maxHeight = calculateMaxHeight();
     
     if (newHeight <= maxHeight) {
       textarea.style.height = newHeight + 'px';
+      textarea.style.overflowY = 'hidden';
     } else {
       textarea.style.height = maxHeight + 'px';
       textarea.style.overflowY = 'auto';
     }
   };
 
-  useEffect(() => {
-    if (caseNotesRef.current) {
+  const adjustAllTextareas = () => {
+    // When both textareas are visible, split the available height
+    if (showLabResults && caseNotesRef.current && labResultsRef.current) {
+      const maxTotalHeight = calculateMaxHeight();
+      
+      // Calculate natural heights
+      caseNotesRef.current.style.height = 'auto';
+      labResultsRef.current.style.height = 'auto';
+      
+      const caseNotesHeight = caseNotesRef.current.scrollHeight + 4;
+      const labResultsHeight = labResultsRef.current.scrollHeight + 4;
+      const totalHeight = caseNotesHeight + labResultsHeight + 20; // 20px for gap
+      
+      if (totalHeight > maxTotalHeight) {
+        // Need to constrain heights
+        const availableForTextareas = maxTotalHeight - 20; // Subtract gap
+        const caseNotesRatio = caseNotesHeight / totalHeight;
+        const labResultsRatio = labResultsHeight / totalHeight;
+        
+        const caseNotesMaxHeight = Math.floor(availableForTextareas * caseNotesRatio);
+        const labResultsMaxHeight = Math.floor(availableForTextareas * labResultsRatio);
+        
+        caseNotesRef.current.style.height = Math.min(caseNotesHeight, caseNotesMaxHeight) + 'px';
+        caseNotesRef.current.style.overflowY = caseNotesHeight > caseNotesMaxHeight ? 'auto' : 'hidden';
+        
+        labResultsRef.current.style.height = Math.min(labResultsHeight, labResultsMaxHeight) + 'px';
+        labResultsRef.current.style.overflowY = labResultsHeight > labResultsMaxHeight ? 'auto' : 'hidden';
+      } else {
+        // Natural heights fit
+        caseNotesRef.current.style.height = caseNotesHeight + 'px';
+        caseNotesRef.current.style.overflowY = 'hidden';
+        
+        labResultsRef.current.style.height = labResultsHeight + 'px';
+        labResultsRef.current.style.overflowY = 'hidden';
+      }
+    } else {
+      // Single textarea
       adjustTextareaHeight(caseNotesRef.current);
-    }
-  }, [localCaseNotes]);
-
-  useEffect(() => {
-    if (labResultsRef.current && showLabResults) {
       adjustTextareaHeight(labResultsRef.current);
     }
-  }, [localLabResults, showLabResults]);
+  };
+
+  useEffect(() => {
+    adjustAllTextareas();
+  }, [localCaseNotes, localLabResults, showLabResults]);
+
+  // Add resize observer to handle viewport changes
+  useEffect(() => {
+    const handleResize = () => {
+      adjustAllTextareas();
+    };
+
+    window.addEventListener('resize', handleResize);
+    
+    // Also handle orientation change for mobile devices
+    window.addEventListener('orientationchange', () => {
+      setTimeout(handleResize, 100); // Small delay for orientation change to complete
+    });
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, [showLabResults]);
 
   const handleClear = useCallback(() => {
     console.log('[CLEAR_DEBUG] CaseInputSection: handleClear called');
@@ -312,8 +410,7 @@ const CaseInputSection = ({
     setHasInput(true);
     
     setTimeout(() => {
-      adjustTextareaHeight(caseNotesRef.current);
-      adjustTextareaHeight(labResultsRef.current);
+      adjustAllTextareas();
     }, 0);
     
     if (typeof handleExampleLoad === 'function') {
@@ -352,9 +449,7 @@ const CaseInputSection = ({
           
           // Adjust textarea height after content is set
           setTimeout(() => {
-            if (labResultsRef.current) {
-              adjustTextareaHeight(labResultsRef.current);
-            }
+            adjustAllTextareas();
           }, 0);
           
         } catch (error) {
@@ -426,7 +521,7 @@ const CaseInputSection = ({
         style={{ display: 'none' }}
       />
       
-      <div className="bg-white border border-gray-200 rounded-xl p-4 sm:p-6 w-full flex flex-col transition-all duration-300 ease-in-out max-h-[75vh] overflow-hidden shadow-sm hover:shadow-md relative mb-8">
+      <div className="case-input-container bg-white border border-gray-200 rounded-xl p-4 sm:p-6 w-full flex flex-col transition-all duration-300 ease-in-out shadow-sm hover:shadow-md relative mb-8" style={{ maxHeight: `${calculateContainerMaxHeight()}px` }}>
       {(isRedacting || isProcessingPDF) && (
         <div className="absolute top-0 left-0 right-0 bg-blue-100 bg-opacity-90 text-blue-700 px-2 py-1 text-xs z-10">
           <div className="flex items-center">
@@ -438,7 +533,7 @@ const CaseInputSection = ({
           </div>
         </div>
       )}
-      <div className="flex-grow overflow-y-auto flex flex-col">
+      <div className="flex-grow flex flex-col" style={{ overflowY: 'auto' }}>
         <div className="relative">
           <textarea
             ref={caseNotesRef}
@@ -448,7 +543,7 @@ const CaseInputSection = ({
             onFocus={handleCaseNotesFocus}
             onBlur={handleCaseNotesBlur}
             placeholder="Please input your case notes"
-            style={{ minHeight: '3em', maxHeight: '35vh' }}
+            style={{ minHeight: '3em' }}
           />
         </div>
         
@@ -462,7 +557,7 @@ const CaseInputSection = ({
               onFocus={handleLabResultsFocus}
               onBlur={handleLabResultsBlur}
               placeholder="Enter lab results here"
-              style={{ minHeight: '3em', maxHeight: '35vh' }}
+              style={{ minHeight: '3em' }}
             />
           </div>
         )}

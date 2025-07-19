@@ -143,11 +143,11 @@ const MainPanel = ({
 
   if (showCaseInput) {
     return (
-      <main className="flex-1 flex flex-col items-center h-full p-4 pt-40 sm:pt-40 pb-32">
+      <main className="flex-1 flex flex-col items-center h-full p-4 pt-40 sm:pt-40 lg:pt-56 pb-32">
         <div className="text-center mb-4" style={{ minHeight: '100px' }}>
           <WelcomeText show={true} firstName={firstName} />
         </div>
-        <div className="w-full sm:max-w-4xl mx-auto mt-8">
+        <div className="w-full sm:max-w-2xl mx-auto mt-24">
           <div className={`${fadeAwayClass} opacity-100`}>
             <CaseInputSection
               caseNotes={caseNotes}
