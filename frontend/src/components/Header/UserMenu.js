@@ -29,7 +29,7 @@ const UserMenu = ({ user, firstName, handleLogout, showUserMenu, setShowUserMenu
   };
 
   return (
-    <div className="relative">
+    <div className="relative flex items-center">
       <div
         className="relative z-20 cursor-pointer"
         onClick={toggleUserMenu}
@@ -41,7 +41,7 @@ const UserMenu = ({ user, firstName, handleLogout, showUserMenu, setShowUserMenu
             className="w-8 h-8 rounded-full"
           />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-white text-[#1e3a8a] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full bg-transparent text-white flex items-center justify-center">
             {(firstName || user?.displayName || 'U')[0].toUpperCase()}
           </div>
         )}

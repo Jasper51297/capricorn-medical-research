@@ -23,7 +23,7 @@ const Header = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setS
   const showLoginButton = !isAuthenticated || isAnonymous;
 
   return (
-    <header className="h-16 p-4 flex justify-end items-center bg-transparent text-white z-100 relative">
+    <div className="p-4 flex justify-end items-center">
       <div className="flex items-center">
         {showLoginButton ? (
           <div className="relative z-20">
@@ -48,7 +48,7 @@ const Header = ({ user, firstName, handleLogin, handleLogout, showUserMenu, setS
           />
         )}
       </div>
-    </header>
+    </div>
   );
 };
 

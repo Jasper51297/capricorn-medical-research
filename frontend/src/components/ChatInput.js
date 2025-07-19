@@ -223,7 +223,7 @@ const handleSubmit = useCallback((e) => {
 
   return (
     <div className="w-full p-2">
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 relative max-w-[50%] mx-auto">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 relative max-w-full mx-auto">
         <div className="w-full bg-white border border-gray-200 rounded-3xl relative shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out p-1">
           {isRedacting && (
             <div className="absolute top-0 left-0 right-0 bg-blue-100 bg-opacity-90 text-blue-700 px-2 py-1 text-xs z-10 rounded-t-3xl">

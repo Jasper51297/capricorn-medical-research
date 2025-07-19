@@ -18,7 +18,6 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import IntendedUseModal from './components/IntendedUseModal';
 import { WrappedExpandableSidebar } from './components/ExpandableSidebar';
 import TopBar from './components/TopBar';
-import LeftPanel from './components/LeftPanel/LeftPanel';
 import MainPanel from './components/MainPanel/MainPanel';
 import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -433,7 +432,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
       <IntendedUseModal isOpen={showIntendedUse} onClose={handleCloseIntendedUse} />
       <TopBar 
         user={user}
@@ -444,10 +443,6 @@ useEffect(() => {
         setShowUserMenu={handleToggleUserMenu}
         isAuthenticated={isAuthenticated}
       />
-      {/* Debug information */}
-      <div className="fixed bottom-0 left-0 bg-black text-white p-2 text-xs">
-        Debug: isAuthenticated: {isAuthenticated.toString()}, firstName: {firstName}
-      </div>
 
       {/* Feedback Button and Modal */}
       <FeedbackButton onClick={handleOpenFeedbackModal} />
@@ -471,23 +466,8 @@ useEffect(() => {
         />
         </div>
 
-        <LeftPanel
-          isLoading={!!currentProgress || hasDocumentMessages}
-          isRetrieving={isRetrieving}
-          handleRetrieve={handleRetrieve}
-          isBox3Hovered={isBox3Hovered}
-          setIsBox3Hovered={setIsBox3Hovered}
-          isPromptExpanded={isPromptExpanded}
-          setIsPromptExpanded={setIsPromptExpanded}
-          promptContent={currentPromptContent}
-          setPromptContent={setCurrentPromptContent}
-          currentProgress={currentProgress}
-          numArticles={numArticles}
-          setNumArticles={setNumArticles}
-          hasDocumentMessages={hasDocumentMessages}
-        />
-
-        <MainPanel
+        <div className="ml-12 flex-1 flex w-full overflow-hidden">
+          <MainPanel
           extractedDisease={extractedDisease}
           extractedEvents={extractedEvents}
           setExtractedDisease={setExtractedDisease}
@@ -529,6 +509,7 @@ useEffect(() => {
           isProcessingArticles={isProcessingArticles}
           setIsProcessingArticles={setIsProcessingArticles}
         />
+        </div>
       </div>
       
       <Footer />

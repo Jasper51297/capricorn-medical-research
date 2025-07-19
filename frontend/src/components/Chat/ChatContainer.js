@@ -126,7 +126,7 @@ const ChatContainer = ({
   })));
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto space-y-4" style={{ paddingBottom: `calc(${chatInputHeight}px + 6rem)` }}>
-      <div className="max-w-[95%] space-y-6 px-4">
+      <div className="px-4">
         {/* Chat messages with their associated documents and analysis */}
         <div className="space-y-4">
           {chatHistory.map((msg, index) => {
@@ -281,7 +281,7 @@ const ChatContainer = ({
       <div ref={messageEndRef} />
       {/* ChatInput component */}
       {hasAnalysis && !isGeneratingSample && !isLoadingDocs && !isLoadingAnalysis && (
-        <div className="fixed bottom-16 left-0 right-0 z-85">
+        <div className="absolute bottom-0 left-0 right-0 pb-4">
           <div className="relative w-full bg-transparent">
             <ChatInput 
               message={message}

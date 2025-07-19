@@ -15,7 +15,7 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { findLastIndex } from 'lodash';
 import ChatContainer from '../Chat/ChatContainer';
-import CaseInputSection from '../LeftPanel/CaseInputSection';
+import CaseInputSection from './CaseInputSection';
 import WelcomeText from './WelcomeText';
 import { db, auth } from '../../firebase';
 import { collection, query, onSnapshot } from 'firebase/firestore';
@@ -141,12 +141,48 @@ const MainPanel = ({
     }
   }, [chatHistory]);
 
+  if (showCaseInput) {
+    return (
+      <main className="flex-1 flex flex-col items-center h-full p-4 pt-40 sm:pt-40 pb-32">
+        <div className="text-center mb-4" style={{ minHeight: '100px' }}>
+          <WelcomeText show={true} firstName={firstName} />
+        </div>
+        <div className="w-full sm:max-w-4xl mx-auto mt-8">
+          <div className={`${fadeAwayClass} opacity-100`}>
+            <CaseInputSection
+              caseNotes={caseNotes}
+              setCaseNotes={setCaseNotes}
+              labResults={labResults}
+              setLabResults={setLabResults}
+              isProcessing={isProcessing}
+              handleExtract={handleExtractWithWelcomeText}
+              handleExampleLoad={(exampleCaseNotes, exampleLabResults) => {
+                setCaseNotes(exampleCaseNotes);
+                setLabResults(exampleLabResults);
+              }}
+              showCaseInput={showCaseInput}
+              handleClearAll={() => {
+                console.log('[CLEAR_DEBUG] MainPanel: handleClearAll called');
+                handleClearAll();
+                setCaseNotes('');
+                setLabResults('');
+                console.log('[CLEAR_DEBUG] MainPanel: After handleClearAll - caseNotes:', caseNotes, 'labResults:', labResults);
+              }}
+              numArticles={numArticles}
+              setNumArticles={setNumArticles}
+            />
+          </div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="flex-1 flex flex-col h-full relative w-full max-w-4xl mx-auto">
+    <main className="flex-1 flex flex-col h-full relative w-full sm:max-w-4xl mx-auto overflow-hidden">
       <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-0">
         <WelcomeText show={showWelcomeText} firstName={firstName} />
       </div>
-      <div ref={chatContainerRef} className="flex-1 flex flex-col overflow-auto mt-16">
+      <div ref={chatContainerRef} className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden mt-16">
           <ChatContainer 
             chatInputHeight={CHAT_INPUT_HEIGHT}
             chatHistory={chatHistory}
@@ -190,37 +226,6 @@ const MainPanel = ({
             isProcessingArticles={isProcessingArticles}
             setIsProcessingArticles={setIsProcessingArticles}
           />
-      </div>
-      <div className="relative z-0 mt-auto">
-        {/* CaseInputSection */}
-        {showCaseInput && (
-          <div className={`absolute bottom-0 left-0 right-0 px-4 flex justify-center items-end pb-16 z-50 ${fadeAwayClass} ${showCaseInput ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-            <div className="max-w-[70%] mx-auto">
-              <CaseInputSection
-                caseNotes={caseNotes}
-                setCaseNotes={setCaseNotes}
-                labResults={labResults}
-                setLabResults={setLabResults}
-                isProcessing={isProcessing}
-                handleExtract={handleExtractWithWelcomeText}
-                handleExampleLoad={(exampleCaseNotes, exampleLabResults) => {
-                  setCaseNotes(exampleCaseNotes);
-                  setLabResults(exampleLabResults);
-                }}
-                showCaseInput={showCaseInput}
-                handleClearAll={() => {
-                  console.log('[CLEAR_DEBUG] MainPanel: handleClearAll called');
-                  handleClearAll();
-                  setCaseNotes('');
-                  setLabResults('');
-                  console.log('[CLEAR_DEBUG] MainPanel: After handleClearAll - caseNotes:', caseNotes, 'labResults:', labResults);
-                }}
-                numArticles={numArticles}
-                setNumArticles={setNumArticles}
-              />
-            </div>
-          </div>
-        )}
       </div>
     </main>
   );
