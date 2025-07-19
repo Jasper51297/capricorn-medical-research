@@ -432,7 +432,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden">
       <IntendedUseModal isOpen={showIntendedUse} onClose={handleCloseIntendedUse} />
       <TopBar 
         user={user}
