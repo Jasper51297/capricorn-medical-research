@@ -35,13 +35,13 @@ const ExtractionSection = ({
   }, [extractedDisease, events, onExtractionComplete]);
 
   return (
-    <div className={`w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${fadeInClass} ${className}`}>
+    <div className={`w-full md:w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${fadeInClass} ${className}`}>
       <div className="mb-1 flex justify-between items-center">
         <div className="flex items-center">
-          <svg className="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
           </svg>
-          <h2 className="text-xs font-medium text-gray-700">Disease and actionable events extracted</h2>
+          <h2 className="text-xs font-medium text-gray-700 ml-2">Disease and actionable events extracted</h2>
         </div>
         <button 
           onClick={() => setIsExpanded(!isExpanded)}

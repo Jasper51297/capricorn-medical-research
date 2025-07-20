@@ -72,13 +72,13 @@ useEffect(() => {
 
   return (
     <div 
-      className={`w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${fadeInClass} ${className} ${(!extractedDisease || !extractedEvents.length) ? 'opacity-25' : ''}`}
+      className={`w-full md:w-1/2 bg-surface-50 shadow-lg rounded-lg p-4 mb-4 ${fadeInClass} ${className} ${(!extractedDisease || !extractedEvents.length) ? 'opacity-25' : ''}`}
       onMouseEnter={() => extractedDisease && extractedEvents.length && setIsBox3Hovered(true)}
       onMouseLeave={() => setIsBox3Hovered(false)}
     >
       <div className="mb-1 flex justify-between items-center">
         <div className="flex items-center">
-          <div className="w-4 h-4 mr-2 flex items-center justify-center">
+          <div className="w-4 h-4 flex items-center justify-center">
             {hasDocumentMessages ? (
               <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
@@ -91,7 +91,7 @@ useEffect(() => {
               </svg>
             )}
           </div>
-          <h2 className="text-xs font-medium text-gray-700">
+          <h2 className="text-xs font-medium text-gray-700 ml-2">
             {showProcessingMessage ? "Sending instructions for paper retrieval" : "Sending instructions for paper retrieval"}
           </h2>
         </div>
@@ -140,7 +140,7 @@ useEffect(() => {
               type="number"
               min="1"
               max="50"
-              className="w-20 p-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-xs"
+              className="w-20 p-1.5 border subtle-input rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-xs"
               value={numArticles}
               onChange={(e) => {
                 const value = Math.min(50, Math.max(1, parseInt(e.target.value) || 15));

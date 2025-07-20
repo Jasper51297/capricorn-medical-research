@@ -182,7 +182,7 @@ const MainPanel = ({
       <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-0">
         <WelcomeText show={showWelcomeText} firstName={firstName} />
       </div>
-      <div ref={chatContainerRef} className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden mt-16">
+      <div ref={chatContainerRef} className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden mt-24">
           <ChatContainer 
             chatInputHeight={CHAT_INPUT_HEIGHT}
             chatHistory={chatHistory}
