@@ -521,7 +521,7 @@ const CaseInputSection = ({
         style={{ display: 'none' }}
       />
       
-      <div className="case-input-container bg-white border border-gray-200 rounded-xl p-4 sm:p-6 w-full flex flex-col transition-all duration-300 ease-in-out shadow-sm hover:shadow-md relative mb-8" style={{ maxHeight: `${calculateContainerMaxHeight()}px` }}>
+      <div className="case-input-container bg-white border border-gray-200 rounded-xl p-4 sm:p-6 w-full flex flex-col transition-all duration-300 ease-in-out shadow-sm hover:shadow-md relative mb-8 mt-12" style={{ maxHeight: `${calculateContainerMaxHeight()}px` }}>
       {(isRedacting || isProcessingPDF) && (
         <div className="absolute top-0 left-0 right-0 bg-blue-100 bg-opacity-90 text-blue-700 px-2 py-1 text-xs z-10">
           <div className="flex items-center">
