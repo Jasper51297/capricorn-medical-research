@@ -433,7 +433,6 @@ useEffect(() => {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <IntendedUseModal isOpen={showIntendedUse} onClose={handleCloseIntendedUse} />
       <TopBar 
         user={user}
         firstName={firstName}
@@ -447,6 +446,7 @@ useEffect(() => {
       {/* Feedback Button and Modal */}
       <FeedbackButton onClick={handleOpenFeedbackModal} />
       <FeedbackModal isOpen={showFeedbackModal} onClose={handleCloseFeedbackModal} />
+      <IntendedUseModal isOpen={showIntendedUse} onClose={handleCloseIntendedUse} />
 
       <div className="flex flex-1 min-h-0 relative w-full">
         <div className="absolute z-10">

@@ -155,11 +155,6 @@ const ChatContainer = ({
       ref={index === chatHistory.length - 1 ? lastMessageRef : null}
       showInitialCase={showInitialCase}
     />
-    {!msg.isUser && (
-      <div className="text-[0.50rem] text-gray-400 italic ml-4 mt-1 mb-2">
-        Message requires physician interpretation and clinical judgment.
-      </div>
-    )}
                     {isInitialCaseMessage && (
                       <>
                         <div className="mb-4">
@@ -243,7 +238,7 @@ const ChatContainer = ({
       </div>
       <div>
         <span className="text-xs text-gray-500 italic block mb-4">
-          For professional medical use only. Articles dated to PubMed Central Dec 2024 annual baseline. Results require physician interpretation and clinical judgment. Capricorn is an advanced search tool, not a substitute for professional medical advice.
+          For professional medical use only. Articles from PubMed Central daily updates. Results require physician interpretation and clinical judgment. Capricorn is an advanced search tool, not a substitute for professional medical advice.
         </span>
       </div>
       <PrintButton content={msg.analysis} />

@@ -136,6 +136,11 @@ const ChatMessage = React.forwardRef(({ message, showInitialCase }, ref) => {
           })()}
         </div>
       </div>
+      {!message.isUser && !message.initialCase && (
+        <div className="text-[0.50rem] text-gray-400 italic ml-4 mt-1 mb-2">
+          Message requires physician interpretation and clinical judgment.
+        </div>
+      )}
     </div>
   );
 });
