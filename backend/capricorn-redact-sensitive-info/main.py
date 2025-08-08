@@ -17,8 +17,6 @@ from flask import jsonify
 from google.cloud import dlp_v2
 from google import genai
 from google.genai import types
-import json
-import re
 from datetime import datetime
 import os
 
@@ -32,11 +30,12 @@ client = genai.Client(
     location=os.environ.get('LOCATION', 'us-central1'),
 )
 
+
 def get_info_types():
     """Get list of info types to redact, including DATE_OF_BIRTH."""
     all_types = [
         {"name": info_type}
-       for info_type in [
+        for info_type in [
             "EMAIL_ADDRESS",
             "STREET_ADDRESS",
             "LOCATION",
@@ -171,39 +170,42 @@ def get_info_types():
     ]
     return all_types
 
+
 def standardize_date(date_string):
     prompt = f"""
     Convert the following date to YYYY-MM-DD format: {date_string}
-    
+
     Respond with ONLY the standardized date in YYYY-MM-DD format.
     If the date cannot be converted, respond with 'INVALID'.
     """
-    
+
     contents = [types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
-    
+
     generate_content_config = types.GenerateContentConfig(
         temperature=0,
         top_p=1,
         max_output_tokens=20,
         response_modalities=["TEXT"],
     )
-    
+
     response = client.models.generate_content(
         model="gemini-2.0-flash-001",
         contents=contents,
         config=generate_content_config
     )
-    
+
     standardized_date = response.text.strip()
     if standardized_date == 'INVALID':
         raise ValueError("Invalid date format")
     return standardized_date
+
 
 def calculate_age(birth_date):
     today = datetime.now()
     birth_date = datetime.strptime(birth_date, "%Y-%m-%d")
     age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
     return age
+
 
 def deidentify_content(project_id, text):
     """Deidentify sensitive content using DLP API and Gemini for date processing."""
@@ -250,7 +252,7 @@ def deidentify_content(project_id, text):
             except Exception as e:
                 print(f"Error processing DATE_OF_BIRTH: {str(e)}")
                 text = text.replace(quote, "[REDACTED DATE_OF_BIRTH]")
-                print(f"Redacted DATE_OF_BIRTH due to processing error")
+                print("Redacted DATE_OF_BIRTH due to processing error")
 
     # Set up DLP API request for deidentification of remaining sensitive information
     deidentify_config = {
@@ -279,7 +281,7 @@ def deidentify_content(project_id, text):
     try:
         print("Calling DLP API for content deidentification")
         deidentify_response = dlp_client.deidentify_content(request=deidentify_request)
-        
+    
         print("DLP API Deidentification Response:")
         if hasattr(deidentify_response, 'overview') and hasattr(deidentify_response.overview, 'transformed_overview'):
             for transformation in deidentify_response.overview.transformed_overview.transformation_summaries:
@@ -287,12 +289,13 @@ def deidentify_content(project_id, text):
                 print(f"  Occurrences: {transformation.transformed_count}")
         else:
             print("  No transformation overview available in the response.")
-        
+
         print(f"Final redacted text: {deidentify_response.item.value}")
         return deidentify_response.item.value
     except Exception as e:
         print(f"Error in deidentify_content: {str(e)}")
         return None  # Return None instead of raising an exception
+
 
 @functions_framework.http
 def redact_sensitive_info(request):
@@ -320,7 +323,7 @@ def redact_sensitive_info(request):
     try:
         request_json = request.get_json()
         print("Received request for redaction")
-        
+
         if not request_json:
             print("No JSON data received in request")
             return jsonify({'error': 'No JSON data received'}), 400, headers
@@ -352,7 +355,7 @@ def redact_sensitive_info(request):
 
         # Extract identified info types from debug_info
         identified_info_types = [line.split(': ')[1] for line in debug_info if line.startswith('Found ')]
-        
+
         # Print identified info types
         print(f"Identified info types: {identified_info_types}")
 

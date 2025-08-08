@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import functions_framework
-from flask import jsonify, request
+from flask import jsonify, request  # noqa: 401
 import vertexai
 from google import genai
 from google.genai import types
@@ -116,7 +116,9 @@ Full Text:
 {'='*80}
 """)
 
-    prompt = f"""You are a pediatric hematologist sitting on a tumor board for patients with complex diseases. Your goal is to find the best treatment for every patient, considering their actionable events (genetic, immune-related, or other).
+    prompt = f"""You are a pediatric hematologist sitting on a tumor board for patients with complex diseases. \
+Your goal is to find the best treatment for every patient, considering their actionable events \
+(genetic, immune-related, or other).
 
 CASE INFORMATION:
 {case_notes}
@@ -129,7 +131,8 @@ ANALYZED ARTICLES:
 {'\n'.join(articles_table)}
 {'='*80}
 
-Based on the clinical input, actionable events, and the analyzed articles above, please provide a comprehensive analysis in markdown format with the following sections:
+Based on the clinical input, actionable events, and the analyzed articles above, \
+please provide a comprehensive analysis in markdown format with the following sections:
 
 ## Case Analysis: {disease}
 
@@ -141,7 +144,9 @@ A brief paragraph summarizing the case.
 |-------|------|-------------|------------|------------------|
 [Fill with event details, one row per event]
 
-Following the table, provide a concise interpretation of the actionable events, focusing on their clinical implications, potential impact on treatment decisions, and overall prognosis. Highlight any synergistic or conflicting interactions between events.
+Following the table, provide a concise interpretation of the actionable events, \
+focusing on their clinical implications, potential impact on treatment decisions, and overall prognosis. \
+Highlight any synergistic or conflicting interactions between events.
 
 ### 3. Treatment Options
 | Event | Treatment | Evidence (PMID) | Evidence Summary | Previous Response | Warnings |
@@ -152,11 +157,15 @@ IMPORTANT FOR TREATMENT OPTIONS:
 - You MUST include at least one PMID from the provided articles in the Evidence column for EACH recommendation
 - DO NOT use "N/A" in the Evidence column - instead, find the most relevant article(s) from the provided list
 - If multiple articles support a recommendation, include all relevant PMIDs
-- If direct evidence is limited but an article suggests the approach, still cite that PMID and indicate it's a suggestion
+- If direct evidence is limited but an article suggests the approach, still cite that PMID and indicate it's a \
+suggestion
 - For every treatment recommendation, you MUST trace it back to specific information in at least one of the articles
 - Format PMIDs as clickable links with publication year: [PMID: 12345 (2023)](https://pubmed.ncbi.nlm.nih.gov/12345/)
 
-After the table, offer a succinct clinical perspective on the recommended treatments. Address the strength of evidence, potential benefits and risks, and how these treatments align with the patient's specific genetic and clinical profile. Discuss any notable drug interactions or sequencing considerations.
+After the table, offer a succinct clinical perspective on the recommended treatments. \
+Address the strength of evidence, potential benefits and risks, \
+and how these treatments align with the patient's specific genetic and clinical profile. \
+Discuss any notable drug interactions or sequencing considerations.
 
 ### 4. Multi-Target Opportunities
 | Treatment Combination | Targeted Events | Evidence (PMID) | Summary |
@@ -173,11 +182,14 @@ IMPORTANT FOR MULTI-TARGET OPPORTUNITIES:
 - Format PMIDs as clickable links with publication year: [PMID: 12345 (2023)](https://pubmed.ncbi.nlm.nih.gov/12345/)
 - DO NOT use "N/A" in the Evidence column
 
-Following this table, provide a brief analysis of the multi-target approach. Evaluate the potential synergistic effects, discuss the rationale behind combining therapies, and comment on the anticipated efficacy and safety profile of these combinations in the context of this specific case.
+Following this table, provide a brief analysis of the multi-target approach. \
+Evaluate the potential synergistic effects, discuss the rationale behind combining therapies, \
+and comment on the anticipated efficacy and safety profile of these combinations in the context of this specific case.
 
 IMPORTANT FORMATTING NOTES:
 1. Use proper markdown table syntax with | separators and aligned headers
-2. Format PMID links as clickable links with publication year: [PMID: 12345 (2023)](https://pubmed.ncbi.nlm.nih.gov/12345/)
+2. Format PMID links as clickable links with publication year: \
+[PMID: 12345 (2023)](https://pubmed.ncbi.nlm.nih.gov/12345/)
 3. For multiple items in a cell, use bullet points:
    * First item
    * Second item
@@ -191,10 +203,13 @@ IMPORTANT NOTES:
 - Keep explanations and summaries concise but informative
 - Ensure all PMIDs are formatted as clickable links
 - Use bullet points in cells where multiple items need to be listed
-- For each summary, prioritize clinically actionable insights. Focus on how the information in each table translates to practical decision-making in patient care. Keep the language concise and directly relevant to the case at hand.
+- For each summary, prioritize clinically actionable insights. \
+Focus on how the information in each table translates to practical decision-making in patient care. \
+Keep the language concise and directly relevant to the case at hand.
 - NEVER use "N/A" in the Evidence (PMID) columns - always find relevant articles to cite
 
-IMPORTANT: Return the analysis in markdown format with the specified table structure. Do not include any JSON formatting."""
+IMPORTANT: Return the analysis in markdown format with the specified table structure. \
+Do not include any JSON formatting."""  # noqa: E999
 
     return prompt
 
@@ -228,6 +243,7 @@ def analyze_with_gemini(prompt):
     except Exception as e:
         logger.error(f"Error in analyze_with_gemini: {str(e)}")
         return None
+
 
 @functions_framework.http
 def final_analysis(request):

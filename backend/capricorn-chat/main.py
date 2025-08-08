@@ -12,19 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#!/usr/bin/env python
-
 import functions_framework
 from flask import jsonify, Response, stream_with_context
 from google import genai
+from google.genai import types
 from google.cloud import firestore
 import json
 import os
 
 # Initialize Firestore client with environment variable
 db = firestore.Client(database=os.environ.get('DATABASE_ID', 'capricorn-eu'))
-
-from google.genai import types
 
 # Initialize Gemini client with environment variables
 client = genai.Client(
@@ -33,20 +30,23 @@ client = genai.Client(
     location=os.environ.get('LOCATION', 'us-central1'),
 )
 
+
 def get_chat_history(user_id, chat_id):
     """Retrieve chat history from Firestore."""
     chat_ref = db.collection('chats').document(user_id).collection('conversations').document(chat_id)
     chat_doc = chat_ref.get()
-    
+
     if not chat_doc.exists:
         return []
-        
+
     messages = chat_doc.to_dict().get('messages', [])
     return messages
 
+
 def create_gemini_prompt():
     """Create the expert pediatric oncologist prompt."""
-    return """You are engaging in a conversation with a fellow expert clinician about a pediatric oncology case. The conversation history will contain:
+    return """You are engaging in a conversation with a fellow expert clinician about a pediatric oncology case. \
+The conversation history will contain:
 
 1. The initial patient case, including:
    - Detailed case notes
@@ -80,7 +80,9 @@ Remember:
 - Don't make claims without evidence from the provided articles
 - Focus on answering the specific question while leveraging the rich context available
 
-The conversation will include full article texts and analysis - use this information to provide detailed, evidence-based responses."""
+The conversation will include full article texts and analysis - use this information to provide detailed, \
+evidence-based responses."""
+
 
 @functions_framework.http
 def chat(request):
@@ -101,30 +103,30 @@ def chat(request):
     }
 
     request_json = request.get_json(silent=True)
-    
+
     if not request_json:
         return jsonify({'error': 'No JSON data received'}), 400, headers
-        
+
     message = request_json.get('message')
     user_id = request_json.get('userId')
     chat_id = request_json.get('chatId')
-    
+
     if not all([message, user_id, chat_id]):
         return jsonify({'error': 'Missing required fields'}), 400, headers
 
     try:
         # Get chat history
         chat_history = get_chat_history(user_id, chat_id)
-        
+
         # Create conversation history for Gemini
         conversation = []
-        
+
         # Add system prompt
         conversation.append({
             "role": "user",
             "parts": [create_gemini_prompt()]
         })
-        
+
         # Add chat history - include all messages with raw content
         for msg in chat_history:
             role = "user" if msg.get('role') == 'user' else "model"
@@ -132,13 +134,12 @@ def chat(request):
                 "role": role,
                 "parts": [msg.get('content')]
             })
-        
+
         # Add current message
         conversation.append({
             "role": "user",
             "parts": [message]
         })
-
 
         # Convert conversation to Gemini content format
         contents = []
@@ -184,14 +185,14 @@ def chat(request):
                     contents=contents,
                     config=generate_content_config
                 )
-                
+
                 for chunk in response:
                     if chunk.text:
                         yield f"data: {json.dumps({'text': chunk.text})}\n\n"
-                        
+      
             except Exception as e:
                 yield f"data: {json.dumps({'error': str(e)})}\n\n"
-            
+
             yield "data: [DONE]\n\n"
 
         return Response(

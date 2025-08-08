@@ -13,7 +13,7 @@
 # limitations under the License.
 
 import functions_framework
-from flask import jsonify, request, Response
+from flask import jsonify, request, Response  # noqa 401
 from google import genai
 from google.genai import types
 from google.cloud import bigquery
@@ -31,6 +31,7 @@ logger = logging.getLogger(__name__)
 # Global variable to store journal impact data
 journal_impact_data = {}
 
+
 def fetch_journal_impact_data():
     """Fetch journal impact data from BigQuery and store in memory."""
     global journal_impact_data
@@ -42,18 +43,19 @@ def fetch_journal_impact_data():
       `sjr`
     FROM
       `{project_id}.{journal_dataset}.scimagojr_2023`
-    ORDER BY 
+    ORDER BY
       sjr DESC
     """
     try:
         query_job = bq_client.query(query)
         results = query_job.result()
-        
+
         # Convert to dictionary for faster lookups
         journal_impact_data = {row['title']: float(row['sjr']) for row in results}
         logger.info(f"Loaded {len(journal_impact_data)} journal impact records")
     except Exception as e:
         logger.error(f"Error fetching journal impact data: {str(e)}")
+
 
 # Initialize clients with environment variables
 client = genai.Client(
@@ -62,6 +64,7 @@ client = genai.Client(
     location=os.environ.get('LOCATION', 'us-central1'),
 )
 bq_client = bigquery.Client(project=os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016'))
+
 
 def normalize_journal_score(sjr):
     """Normalize journal SJR score to points between 0-25 to align with other scoring metrics."""
@@ -74,11 +77,12 @@ def normalize_journal_score(sjr):
     # Cap at 25 points to match the scale of other point calculations
     return min(normalized, 25)
 
+
 def calculate_points(metadata, query_disease=None):
     """Calculate points based on article metadata and return both total and breakdown."""
     points = 0
     breakdown = {}
-    
+
     # Journal impact points
     if metadata.get('journal_title') and metadata.get('journal_sjr'):
         journal_title = metadata['journal_title']
@@ -90,7 +94,7 @@ def calculate_points(metadata, query_disease=None):
             logger.info(f"Journal '{journal_title}' has SJR {sjr}, awarded {impact_points:.2f} points")
         else:
             logger.info(f"Journal '{journal_title}' has no SJR score")
-    
+
     # Year-based points: -5 points per year difference from current year
     current_year = datetime.now().year
     if metadata.get('year'):
@@ -103,17 +107,17 @@ def calculate_points(metadata, query_disease=None):
         except (ValueError, TypeError):
             # If year is not a valid integer, skip year-based points
             pass
-    
+
     # Disease Match: +50 points
     if metadata.get('disease_match'):
         points += 50
         breakdown['disease_match'] = 50
-    
+
     # Pediatric Focus: +20 points
     if metadata.get('pediatric_focus'):
         points += 20
         breakdown['pediatric_focus'] = 20
-    
+
     # Paper Type: +40 points for clinical trial, -5 points for review
     paper_type = metadata.get('paper_type', '').lower()
     if 'clinical trial' in paper_type:
@@ -122,7 +126,7 @@ def calculate_points(metadata, query_disease=None):
     elif 'review' in paper_type:
         points -= 5
         breakdown['paper_type'] = -5
-    
+
     # Actionable Events: +15 points per matched event
     actionable_events = metadata.get('actionable_events', [])
     matched_events = sum(1 for event in actionable_events if event.get('matches_query', False))
@@ -130,59 +134,60 @@ def calculate_points(metadata, query_disease=None):
         event_points = matched_events * 15
         points += event_points
         breakdown['actionable_events'] = event_points
-    
+
     # Drugs Tested: +5 points
     if metadata.get('drugs_tested'):
         points += 5
         breakdown['drugs_tested'] = 5
-    
+
     # Drug Results: +50 points for actual positive treatment shown
     if metadata.get('treatment_shown'):
         points += 50
         breakdown['treatment_shown'] = 50
-    
+
     # Cell Studies: +5 points
     if metadata.get('cell_studies'):
         points += 5
         breakdown['cell_studies'] = 5
-    
+
     # Mice Studies: +10 points
     if metadata.get('mice_studies'):
         points += 10
         breakdown['mice_studies'] = 10
-    
+
     # Case Report: +5 points
     if metadata.get('case_report'):
         points += 5
         breakdown['case_report'] = 5
-    
+
     # Series of Case Reports: +10 points
     if metadata.get('series_of_case_reports'):
         points += 10
         breakdown['series_of_case_reports'] = 10
-    
+
     # Clinical Study: +15 points
     if metadata.get('clinical_study'):
         points += 15
         breakdown['clinical_study'] = 15
-    
+
     # Clinical Study on Children: +20 points
     if metadata.get('clinical_study_on_children'):
         points += 20
         breakdown['clinical_study_on_children'] = 20
-    
+
     # Novelty: +10 points
     if metadata.get('novelty'):
         points += 10
         breakdown['novelty'] = 10
-    
+
     return points, breakdown
+
 
 def create_gemini_prompt(article_text, pmid, methodology_content=None, disease=None, events_text=None):
     # Add disease and events context to the prompt if provided
     disease_context = f"\nThe patient's disease is: {disease}\n" if disease else ""
     events_context = f"\nThe patient's actionable events are: {events_text}\n" if events_text else ""
-    
+
     # Create journal context string
     journal_context = ""
     for title, sjr in journal_impact_data.items():
@@ -190,10 +195,14 @@ def create_gemini_prompt(article_text, pmid, methodology_content=None, disease=N
 
     # Default methodology if none provided
     if not methodology_content:
-        methodology_content = f"""You are an expert pediatric oncologist and you are the chair of the International Leukemia Tumor Board. Your goal is to evaluate full research articles related to oncology, especially those concerning pediatric leukemia, to identify potential advancements in treatment and understanding of the disease.{disease_context}{events_context}
+        methodology_content = f"""You are an expert pediatric oncologist and you are the chair of the International \
+Leukemia Tumor Board. Your goal is to evaluate full research articles related to oncology, especially those concerning \
+pediatric leukemia, to identify potential advancements in treatment and understanding \
+of the disease.{disease_context}{events_context}
 
 Journal Impact Data (SJR scores):
-The following is a list of journal titles and their SJR scores. When extracting the journal title from the article, find the best matching title from this list and use its SJR score. If no match is found, use 0 as the SJR score.
+The following is a list of journal titles and their SJR scores. When extracting the journal title from the article, \
+find the best matching title from this list and use its SJR score. If no match is found, use 0 as the SJR score.
 
 Journal Titles and Scores:
 {journal_context}
@@ -203,33 +212,40 @@ Journal Titles and Scores:
 </Article>
 
 <Instructions>
-Your task is to read the provided full article and extract key information, and then assess the article's relevance and potential impact. You will generate a JSON object containing metadata and analysis. Please use a consistent JSON structure.
+Your task is to read the provided full article and extract key information, \
+and then assess the article's relevance \and potential impact. \
+You will generate a JSON object containing metadata and analysis. Please use a consistent JSON structure.
 
 As an expert oncologist:
-1. Evaluate if the article's disease focus matches the patient's disease. Set disease_match to true if the article's cancer type is relevant to the patient's condition.
+1. Evaluate if the article's disease focus matches the patient's disease. Set disease_match to true if the article's \
+cancer type is relevant to the patient's condition.
 2. Analyze treatment outcomes. Set treatment_shown to true if the article demonstrates positive treatment results.
-3. For each actionable event you find in the article, determine if it matches any of the patient's actionable events. For genetic mutations, create two separate events:
-   - When you find a general mutation mention (e.g., if the article mentions just "NRAS" when patient has "NRAS (p.Gln61Lys)"), create an event with the general form and set matches_query=true
-   - When you find an exact mutation match (e.g., if the article mentions "NRAS (p.Gln61Lys)" like it appears in the patient's events), create another event with the exact mutation and set matches_query=true
+3. For each actionable event you find in the article, determine if it matches any of the patient's actionable events. \
+For genetic mutations, create two separate events:
+   - When you find a general mutation mention (e.g., if the article mentions just \
+"NRAS" when patient has "NRAS (p.Gln61Lys)"), create an event with the general form and set matches_query=true
+   - When you find an exact mutation match (e.g., if the article mentions "NRAS (p.Gln61Lys)" like it appears in the \
+patient's events), create another event with the exact mutation and set matches_query=true
 
 Please analyze the article and provide a JSON response with the following structure:
 
-{
-  "article_metadata": {
+{{
+  "article_metadata": {{
     "title": "...",
     "year": "...",
     "journal_title": "...",  // Extract the journal title from the article
-    "journal_sjr": 0,        // Look up the SJR score from the provided list. Use the score of the best matching journal title, or 0 if no match found
+    "journal_sjr": 0,        // Look up the SJR score from the provided list. Use the score of the best matching \
+journal title, or 0 if no match found
     "cancer_focus": true/false,
     "pediatric_focus": true/false,
     "type_of_cancer": "...",
     "disease_match": true/false,      // Set to true if article's disease is relevant to patient's condition
     "paper_type": "...",
     "actionable_events": [
-      {
+      {{
         "event": "...",
         "matches_query": true/false   // Set to true if this event matches any of the patient's actionable events
-      }
+      }}
     ],
     "drugs_tested": true/false,
     "drug_results": ["...", "..."],   // List of treatment outcomes
@@ -241,31 +257,28 @@ Please analyze the article and provide a JSON response with the following struct
     "clinical_study": true/false,
     "clinical_study_on_children": true/false,
     "novelty": true/false
-  }
-}
+  }}
+}}
 
-Important: The response must be valid JSON and follow this exact structure. Do not include any explanatory text, markdown formatting, or code blocks. Return only the raw JSON object."""
+Important: The response must be valid JSON and follow this exact structure. Do not include any explanatory text, \
+markdown formatting, or code blocks. Return only the raw JSON object."""
 
     # Log the article text format
     logger.info(f"Article text to be inserted:\n{article_text}")
-    
-    # Replace all placeholders
-    prompt = methodology_content
-    prompt = prompt.replace("{article_text}", article_text)
-    prompt = prompt.replace("{disease}", disease if disease else "")
-    prompt = prompt.replace("{events}", events_text if events_text else "")
-    prompt = prompt.replace("{journal_context}", journal_context)
-    
+
     # Log the final prompt
-    logger.info(f"Final prompt with article inserted:\n{prompt}")
-    
-    return prompt
+    logger.info(f"Final prompt with article inserted:\n{methodology_content}")
+
+    return methodology_content
+
 
 def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=None, events_text=None):
     # Create prompt with JSON-only instruction
     prompt = create_gemini_prompt(article_text, pmid, methodology_content, disease, events_text)
-    prompt += "\n\nIMPORTANT: Return ONLY the raw JSON object. Do not include any explanatory text, markdown formatting, or code blocks. The response should start with '{' and end with '}' with no other characters before or after."
-    
+    prompt += "\n\nIMPORTANT: Return ONLY the raw JSON object. Do not include any explanatory text, \
+        markdown formatting, or code blocks. The response should start with '{' and end with '}' \
+        with no other characters before or after."
+
     # Configure Gemini
     model = "gemini-2.0-flash-001"
     generate_content_config = types.GenerateContentConfig(
@@ -275,18 +288,18 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
         response_modalities=["TEXT"],
         safety_settings=[
             types.SafetySetting(category=cat, threshold="OFF")
-            for cat in ["HARM_CATEGORY_HATE_SPEECH", "HARM_CATEGORY_DANGEROUS_CONTENT", 
-                      "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_HARASSMENT"]
+            for cat in ["HARM_CATEGORY_HATE_SPEECH", "HARM_CATEGORY_DANGEROUS_CONTENT",
+                        "HARM_CATEGORY_SEXUALLY_EXPLICIT", "HARM_CATEGORY_HARASSMENT"]
         ]
     )
-    
+
     # Create content with prompt
     contents = [types.Content(role="user", parts=[{"text": prompt}])]
-    
+
     # Initialize retry parameters
     base_delay = 5  # Start with 5 seconds
     attempt = 0
-    
+
     while True:  # Keep trying indefinitely
         try:
             response = client.models.generate_content(
@@ -306,16 +319,16 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
             else:
                 # If it's not a 429 error, raise immediately
                 raise
-    
+
     try:
         # Log Gemini's raw response with clear markers
         logger.info("========== RAW GEMINI RESPONSE START ==========")
         logger.info(response.text)
         logger.info("========== RAW GEMINI RESPONSE END ============")
-        
+
         # Clean up response text
         text = response.text.strip()
-        
+
         # Try to find JSON object
         try:
             # First try to find JSON between ```json and ``` markers
@@ -326,15 +339,15 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
                 start = text.find('{')
                 end = text.rfind('}') + 1
                 text = text[start:end]
-            
+
             # Remove any non-JSON text before or after
             text = text.strip()
-            
+
             # Log cleaned text before parsing
             logger.info("========== CLEANED TEXT START ==========")
             logger.info(text)
             logger.info("========== CLEANED TEXT END ============")
-            
+
             # Try to parse as JSON
             try:
                 analysis = json.loads(text)
@@ -343,14 +356,15 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
                 logger.error(f"JSON parse error at position {e.pos}: {e.msg}")
                 logger.error(f"Error context: {text[max(0, e.pos-50):min(len(text), e.pos+50)]}")
                 raise
-            
+
             # Validate required fields
             if not isinstance(analysis, dict) or 'article_metadata' not in analysis:
                 logger.error("Invalid JSON structure - missing article_metadata")
                 return None
-                
+
             metadata = analysis['article_metadata']
-            required_fields = ['title', 'journal_title', 'journal_sjr', 'cancer_focus', 'type_of_cancer', 'paper_type', 'actionable_events']
+            required_fields = ['title', 'journal_title', 'journal_sjr', 'cancer_focus',
+                               'type_of_cancer', 'paper_type', 'actionable_events']
             for field in required_fields:
                 if field not in metadata:
                     logger.error(f"Invalid JSON structure - missing {field}")
@@ -359,27 +373,28 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
             logger.error(f"Failed to parse JSON: {str(e)}")
             logger.error(f"Cleaned response was: {text}")
             return None
-        
+
         # Process metadata and calculate points
         if 'article_metadata' in analysis:
             metadata = analysis['article_metadata']
             # Add PMID and generate link
             metadata['PMID'] = pmid
             metadata['link'] = f'https://pubmed.ncbi.nlm.nih.gov/{pmid}/'
-            
+
             # Calculate points with disease information
             points, point_breakdown = calculate_points(metadata, disease)
             metadata['overall_points'] = points
             metadata['point_breakdown'] = point_breakdown
-            
+
             # Store full article text at top level
             analysis['full_article_text'] = article_text
             logger.info("Added full article text and calculated points")
-        
+
         return analysis
     except Exception as e:
         logger.error(f"Error analyzing article with Gemini: {str(e)}")
         return None
+
 
 def create_bq_query(events_text, num_articles=15):
     project_id = os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016')
@@ -398,7 +413,7 @@ def create_bq_query(events_text, num_articles=15):
         STRUCT(TRUE AS flatten_json_output)
       )
     )
-    SELECT 
+    SELECT
   base.name as name,  -- This is the PMCID from pmid_embed_nonzero table
   PMID,              -- This is the PMID from pmid_metadata table
   base.content,
@@ -409,12 +424,13 @@ def create_bq_query(events_text, num_articles=15):
     (SELECT embedding_col FROM query_embedding),
     top_k => {num_articles}
     ) results
-    JOIN `{project_id}.{pmid_dataset}.pmid_embed_nonzero` base 
+    JOIN `{project_id}.{pmid_dataset}.pmid_embed_nonzero` base
     ON results.base.name = base.name  -- Join on PMCID
     JOIN {project_id}.{pmid_dataset}.pmid_metadata metadata
     ON base.name = metadata.AccessionID  -- Join on PMCID (AccessionID is PMCID)
     ORDER BY distance ASC;
     """
+
 
 def stream_response(events_text, methodology_content=None, disease=None, num_articles=15):
     try:
@@ -424,7 +440,7 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
         query_job = bq_client.query(query)
         results = list(query_job.result())
         total_articles = len(results)
-        
+
         # Get array of PMIDs from BigQuery results and stream immediately
         retrieved_pmids = [row['PMID'] for row in results]
         print(f"Retrieved PMIDs: {retrieved_pmids}")
@@ -452,15 +468,16 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
             pmcid = row['name']  # This is PMCID from base.name
             pmid = row['PMID']   # This is PMID from metadata table
             content = row['content']
-            
+
             # Log article details before analysis
-            logger.info(f"Processing article:\nPMCID: {pmcid}\nPMID: {pmid}\nContent length: {len(content)}\nFirst 200 chars: {content[:200]}")
-            
+            logger.info(f"Processing article:\nPMCID: {pmcid}\nPMID: {pmid}\nContent length: \
+                {len(content)}\nFirst 200 chars: {content[:200]}")
+
             # Add delay between articles
             if idx > 1:  # Don't delay for first article
                 logger.info("Waiting 5 seconds before next analysis...")
                 time.sleep(5)
-            
+
             # Analyze with Gemini and prepare complete response object
             try:
                 # Pass PMID for URL generation and metadata
@@ -521,11 +538,13 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
             }
         }) + "\n"
 
+
 # Fetch journal impact data when module loads
 fetch_journal_impact_data()
 
+
 @functions_framework.http
-def retrieve_full_articles(request):
+def retrieve_full_articles(request):  # noqa: F811
     # Enable CORS
     if request.method == 'OPTIONS':
         headers = {
@@ -566,6 +585,7 @@ def retrieve_full_articles(request):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
         return jsonify({"error": str(e)}), 500, headers
+
 
 if __name__ == "__main__":
     app = functions_framework.create_app(target="retrieve_full_articles")

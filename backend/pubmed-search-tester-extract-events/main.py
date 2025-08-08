@@ -1,5 +1,5 @@
 import functions_framework
-from flask import jsonify, request
+from flask import jsonify, request  # noqa: F401
 from google import genai
 from google.genai import types
 import logging
@@ -16,8 +16,9 @@ client = genai.Client(
     location=os.environ.get('LOCATION'),
 )
 
+
 @functions_framework.http
-def extract_events(request):
+def extract_events(request):  # noqa: F811
     # Enable CORS
     if request.method == 'OPTIONS':
         headers = {
@@ -89,6 +90,7 @@ def extract_events(request):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
         return (jsonify({"error": str(e)}), 500, headers)
+
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google Cloud Functions,

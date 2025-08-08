@@ -13,10 +13,10 @@
 # limitations under the License.
 
 import os
-import json
 import logging
-from flask import jsonify, request
-from flask_cors import cross_origin
+import functions_framework
+
+from flask import jsonify, request  # noqa: F401
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, To
 
@@ -30,13 +30,15 @@ TEAM_RECIPIENTS = [
     'U.ilan-2@prinsesmaximacentrum.nl'
 ]
 
-def send_feedback_email(request):
+
+@functions_framework.http
+def send_feedback_email(request):  # noqa: F811
     """
     Cloud Function to send feedback emails using SendGrid.
-    
+
     Args:
         request (flask.Request): The request object.
-        
+
     Returns:
         The response text, or any set of values that can be turned into a
         Response object using `make_response`.
@@ -52,40 +54,40 @@ def send_feedback_email(request):
             'Access-Control-Max-Age': '3600'
         }
         return ('', 204, headers)
-    
+
     # Set CORS headers for the main request
     headers = {
         'Access-Control-Allow-Origin': '*'
     }
-    
+
     try:
         # Get request data
         request_json = request.get_json(silent=True)
-        
+
         if not request_json:
             logger.error("No JSON data in request")
             return (jsonify({'success': False, 'error': 'No data provided'}), 400, headers)
-        
+
         # Extract feedback data
         name = request_json.get('name', 'Anonymous User')
         email = request_json.get('email', 'No email provided')
         feedback_text = request_json.get('feedback')
-        
+
         if not feedback_text:
             logger.error("No feedback text provided")
             return (jsonify({'success': False, 'error': 'No feedback text provided'}), 400, headers)
-        
+
         # Get SendGrid API key from environment variable
         api_key = os.environ.get('SENDGRID_API_KEY')
         if not api_key:
             logger.error("SendGrid API key not found")
             return (jsonify({'success': False, 'error': 'Email service configuration error'}), 500, headers)
-        
+
         # Create recipients list - include sender if they provided a valid email
         recipients = TEAM_RECIPIENTS.copy()
         if email and email != 'No email provided' and '@' in email:
             recipients.append(email)
-        
+
         # Create email message
         message = Mail(
             from_email='williszhang@williszhang.com',
@@ -100,15 +102,15 @@ def send_feedback_email(request):
             <p>Thank you for helping us improve the Capricorn Medical Research App.</p>
             """
         )
-        
+
         # Send email
         sg = SendGridAPIClient(api_key)
         response = sg.send(message)
-        
+
         logger.info(f"Email sent with status code: {response.status_code}")
-        
+
         return (jsonify({'success': True}), 200, headers)
-        
+
     except Exception as e:
         logger.error(f"Error sending email: {str(e)}")
         return (jsonify({'success': False, 'error': str(e)}), 500, headers)

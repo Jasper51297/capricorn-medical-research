@@ -1,5 +1,5 @@
 import functions_framework
-from flask import jsonify, request
+from flask import jsonify, request  # noqa: F401
 from google import genai
 from google.genai import types
 import logging
@@ -16,9 +16,11 @@ client = genai.Client(
     location=os.environ.get('LOCATION'),
 )
 
-PROMPT = """You are an expert pediatric oncologist and chair of the International Leukemia Tumor Board (iLTB). Your role is to analyze patient case notes and identify the primary disease being discussed.
+PROMPT = """You are an expert pediatric oncologist and chair of the International Leukemia Tumor Board (iLTB). 
+Your role is to analyze patient case notes and identify the primary disease being discussed.
 
-Input: Patient case notes, as provided by a clinician. This will include information on diagnosis, treatment history, and relevant diagnostic findings.
+Input: Patient case notes, as provided by a clinician. This will include information on diagnosis, treatment history,
+and relevant diagnostic findings.
 
 Task:
 
@@ -26,15 +28,18 @@ Disease Extraction:
 
 Carefully analyze the patient case notes.
 
-Identify the primary disease the patient is diagnosed with and/or being treated for. Extract this disease name exactly as it is written in the notes. It should be the initial diagnosis.
+Identify the primary disease the patient is diagnosed with and/or being treated for.
+Extract this disease name exactly as it is written in the notes. It should be the initial diagnosis.
 
 Example:
 
-Case Note Input: "A now almost 4-year-old female diagnosed with KMT2A-rearranged AML and CNS2 involvement exhibited refractory disease after NOPHO DBH AML 2012 protocol..."
+Case Note Input: "A now almost 4-year-old female diagnosed with KMT2A-rearranged AML and CNS2 involvement
+exhibited refractory disease after NOPHO DBH AML 2012 protocol..."
 
 Output: AML
 
-Case Note Input: "18 y/o boy, diagnosed in November 2021 with T-ALL with CNS1, without any extramedullary disease. Was treated according to ALLTogether protocol..."
+Case Note Input: "18 y/o boy, diagnosed in November 2021 with T-ALL with CNS1, without any extramedullary disease.
+Was treated according to ALLTogether protocol..."
 
 Output: T-ALL
 
@@ -42,13 +47,15 @@ Case Note Input: "A 10-year-old patient with relapsed B-cell acute lymphoblastic
 
 Output: B-cell acute lymphoblastic leukemia (B-ALL)
 
-Extract the disease from the provided patient information. Only output the disease name, exactly as it is written in the case notes. Do not include any other text or formatting.
+Extract the disease from the provided patient information. Only output the disease name,
+exactly as it is written in the case notes. Do not include any other text or formatting.
 
 Case notes:
 """
 
+
 @functions_framework.http
-def extract_disease(request):
+def extract_disease(request):  # noqa: F811
     # Enable CORS
     if request.method == 'OPTIONS':
         headers = {
@@ -120,6 +127,7 @@ def extract_disease(request):
     except Exception as e:
         logger.error(f"Error processing request: {str(e)}")
         return (jsonify({"error": str(e)}), 500, headers)
+
 
 if __name__ == "__main__":
     # This is used when running locally only. When deploying to Google Cloud Functions,

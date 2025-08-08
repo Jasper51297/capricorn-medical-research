@@ -13,11 +13,10 @@
 # limitations under the License.
 
 import functions_framework
-from flask import jsonify, request
+from flask import jsonify, request  # noqa: F401
 from google import genai
 from google.genai import types
 import base64
-import json
 import logging
 import os
 
@@ -25,8 +24,9 @@ import os
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+
 @functions_framework.http
-def process_lab(request):
+def process_lab(request):  # noqa: F811
     """HTTP Cloud Function to process a PDF lab report and extract genomic information."""
     # Handle CORS preflight requests
     if request.method == 'OPTIONS':
@@ -51,7 +51,7 @@ def process_lab(request):
             return jsonify({'error': 'Missing pdf_data in JSON payload'}), 400, headers
 
         pdf_base64 = request_json['pdf_data']
-        
+
         try:
             pdf_bytes = base64.b64decode(pdf_base64)
         except Exception as e:
@@ -72,11 +72,13 @@ def process_lab(request):
         )
 
         # Create the text prompt part
-        text1 = types.Part.from_text(text="""You are an expert bioinformatics assistant tasked with extracting specific information from a multi-page PDF genomic report.
+        text1 = types.Part.from_text(text="""You are an expert bioinformatics assistant tasked with extracting \
+specific information from a multi-page PDF genomic report.
 The report contains several sections and plots. Please analyze all pages carefully.
 
 Output Format:
-Return the extracted information as simple, well-formatted text with clear sections and bullet points. Do not return JSON.
+Return the extracted information as simple, \
+well-formatted text with clear sections and bullet points. Do not return JSON.
 
 1. VARIANTS WITH VAF > 5%
 
@@ -85,14 +87,16 @@ Locate the table, likely on a page titled "HIX -- WES Variant Analysis", that li
 For each variant listed in this table, format as:
 - Gene: [gene symbol], Variant: [full variant nomenclature], VAF: [percentage], Classification: [classification]
 
-Example: 
+Example:
 - Gene: TAL1, Variant: TAL1(NM_003189.5):c.562C>T (p.Arg188Trp), VAF: 36.6%, Classification: 3VUS
 
 2. GENES WITH ELEVATED DENOISED COPY RATIOS (DCR > 2.0)
 
-Examine the plots titled "Tumor PMBBM... - Normal PMGBM... - Denoised Copy Ratio" found on later pages of the report (likely pages 5, 6, and 7, corresponding to different gene panels like panCancerCNV, hematoOncoCNV, neuroOncoCNV).
+Examine the plots titled "Tumor PMBBM... - Normal PMGBM... - Denoised Copy Ratio" found on later pages of the report \
+(likely pages 5, 6, and 7, corresponding to different gene panels like panCancerCNV, hematoOncoCNV, neuroOncoCNV).
 
-IMPORTANT: The baseline of 1.0 represents normal diploid state (2 copies). Only include genes where the tumor sample shows Denoised Copy Ratio STRICTLY GREATER than 2.0.
+IMPORTANT: The baseline of 1.0 represents normal diploid state (2 copies). Only include genes where the tumor sample \
+shows Denoised Copy Ratio STRICTLY GREATER than 2.0.
 
 For each qualifying gene, format as:
 - Gene: [gene symbol], Panel: [panel name], DCR: ~[value]
@@ -105,7 +109,7 @@ If no genes meet the DCR > 2.0 criterion, write: "No genes with DCR > 2.0 detect
 
 3. CHROMOSOME LEVEL ABERRATIONS
 
-Examine the chromosome-level denoised copy ratio plots (likely on pages 3 and 4). 
+Examine the chromosome-level denoised copy ratio plots (likely on pages 3 and 4).
 
 For gains: look for regions consistently at/above ~1.5 DCR
 For losses: look for regions consistently at/below ~0.75 DCR
@@ -124,7 +128,8 @@ Example Output:
 VARIANTS WITH VAF > 5%
 - Gene: TAL1, Variant: TAL1(NM_003189.5):c.562C>T (p.Arg188Trp), VAF: 36.6%, Classification: 3VUS
 - Gene: EZH2, Variant: EZH2(NM_004456.4):c.1937A>T (p.Tyr646Phe), VAF: 49.2%, Classification: 4LP
-- Gene: SOCS1, Variant: SOCS1(NM_003745.1):c.512_517delTGCGGC (p.Val171_Pro173delinsAla), VAF: 32.1%, Classification: 3VUS
+- Gene: SOCS1, Variant: SOCS1(NM_003745.1):c.512_517delTGCGGC (p.Val171_Pro173delinsAla), VAF: 32.1%, \
+Classification: 3VUS
 
 GENES WITH ELEVATED DENOISED COPY RATIOS (DCR > 2.0)
 - Gene: MYC, Panel: panCancerCNV.bed, DCR: ~3.0
@@ -182,7 +187,7 @@ CHROMOSOME LEVEL ABERRATIONS
             return jsonify({'error': 'GenAI returned an empty response.'}), 500, headers
 
         # Return the plain text response
-        logger.info(f"Successfully processed PDF and extracted genomic information")
+        logger.info("Successfully processed PDF and extracted genomic information")
         return jsonify({
             'success': True,
             'data': response.text
@@ -191,6 +196,7 @@ CHROMOSOME LEVEL ABERRATIONS
     except Exception as e:
         logger.error(f"Error in process_lab: {str(e)}", exc_info=True)
         return jsonify({'error': f'An unexpected error occurred: {str(e)}'}), 500, headers
+
 
 if __name__ == "__main__":
     app = functions_framework.create_app(target="process_lab")
