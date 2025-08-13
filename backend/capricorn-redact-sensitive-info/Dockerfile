@@ -6,4 +6,6 @@ RUN pip install -r requirements.txt
 COPY main.py .
 
 EXPOSE 8080
-CMD ["functions-framework" "--target=redact_sensitive_info" "--port=8080"]
+
+ENTRYPOINT ["functions-framework"]
+CMD ["--target=redact_sensitive_info", "--port=8080"]

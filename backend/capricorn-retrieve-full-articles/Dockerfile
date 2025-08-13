@@ -6,4 +6,6 @@ RUN pip install -r requirements.txt
 COPY main.py .
 
 EXPOSE 8080
-CMD ["functions-framework" "--target=retrieve_full_articles" "--port=8080"]
+
+ENTRYPOINT ["functions-framework"]
+CMD ["--target=retrieve_full_articles", "--port=8080"]
