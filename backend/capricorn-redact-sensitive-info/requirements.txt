@@ -1,3 +1,4 @@
 functions-framework==3.*
 google-cloud-dlp==3.*
 Flask==3.1.0
+google-genai==0.3.*
