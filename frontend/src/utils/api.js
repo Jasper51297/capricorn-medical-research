@@ -74,7 +74,7 @@ export const retrieveAndAnalyzeArticles = async (disease, events, methodologyCon
   }
 };
 
-const API_BASE_URL = 'https://us-central1-gemini-med-lit-review.cloudfunctions.net';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export const streamChat = async (message, userId, chatId, onChunk) => {
   try {
