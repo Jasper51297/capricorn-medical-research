@@ -384,36 +384,31 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
 def create_bq_query(events_text, num_articles=15):
     project_id = os.environ.get('BIGQUERY_PROJECT_ID', 'playground-439016')
     pmid_dataset = os.environ.get('PMID_DATASET', 'pmid_uscentral')
+    # Use the pre-joined table from the same project/dataset
+    pubmed_table = f'{project_id}.{pmid_dataset}.pmid_embed_nonzero_metadata'
+    embedding_model = f'{project_id}.{pmid_dataset}.textembed'
+    
     return f"""
     DECLARE query_text STRING;
     SET query_text = \"\"\"
     {events_text}
     \"\"\";
 
-    WITH query_embedding AS (
-      SELECT ml_generate_embedding_result AS embedding_col
-      FROM ML.GENERATE_EMBEDDING(
-        MODEL `{project_id}.{pmid_dataset}.textembed`,
-        (SELECT query_text AS content),
-        STRUCT(TRUE AS flatten_json_output)
-      )
+    WITH vector_results AS (
+        SELECT base.name AS PMCID, base.PMID, base.content, distance 
+        FROM VECTOR_SEARCH(
+            TABLE `{pubmed_table}`, 
+            'ml_generate_embedding_result', 
+            (SELECT ml_generate_embedding_result 
+             FROM ML.GENERATE_EMBEDDING(
+                 MODEL `{embedding_model}`, 
+                 (SELECT query_text AS content)
+             )), 
+            top_k => {num_articles}
+        )
     )
-    SELECT 
-  base.name as name,  -- This is the PMCID from pmid_embed_nonzero table
-  PMID,              -- This is the PMID from pmid_metadata table
-  base.content,
-  distance
-    FROM VECTOR_SEARCH(
-    TABLE `{project_id}.{pmid_dataset}.pmid_embed_nonzero`,
-    'ml_generate_embedding_result',
-    (SELECT embedding_col FROM query_embedding),
-    top_k => {num_articles}
-    ) results
-    JOIN `{project_id}.{pmid_dataset}.pmid_embed_nonzero` base 
-    ON results.base.name = base.name  -- Join on PMCID
-    JOIN {project_id}.{pmid_dataset}.pmid_metadata metadata
-    ON base.name = metadata.AccessionID  -- Join on PMCID (AccessionID is PMCID)
-    ORDER BY distance ASC;
+    SELECT * FROM vector_results
+    ORDER BY distance
     """
 
 def stream_response(events_text, methodology_content=None, disease=None, num_articles=15):
@@ -449,8 +444,8 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
 
         # Process each article
         for idx, row in enumerate(results, 1):
-            pmcid = row['name']  # This is PMCID from base.name
-            pmid = row['PMID']   # This is PMID from metadata table
+            pmcid = row['PMCID']  # This is PMCID from the query result
+            pmid = row['PMID']   # This is PMID from the query result
             content = row['content']
             
             # Log article details before analysis
