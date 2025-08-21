@@ -211,15 +211,15 @@ const ChatContainer = ({
                   console.log('[CHAT_DEBUG] Rendering ArticleResults with:', {
                     id: msg.id,
                     type: msg.type,
-                    hasArticles: !!msg.articles?.length,
-                    currentProgress: msg.currentProgress,
+                    hasArticles: !!msg.content?.articles?.length,
+                    currentProgress: msg.content?.currentProgress,
                     timestamp: msg.timestamp
                   }),
                   <div className="ml-4 mt-2">
                     {showArticleResults && (
                       <ArticleResults 
-                        currentProgress={msg.currentProgress}
-                        articles={msg.articles}
+                        currentProgress={msg.content?.currentProgress}
+                        articles={msg.content?.articles}
                         initialExpanded={initialArticleResultsExpanded}
                         totalArticles={totalArticles}
                         processedArticles={processedArticles}

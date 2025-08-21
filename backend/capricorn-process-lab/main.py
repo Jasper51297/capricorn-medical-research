@@ -135,7 +135,7 @@ CHROMOSOME LEVEL ABERRATIONS
 - Chromosome/Arm: 7, Change: gain, DCR: ~1.5-1.7, Rationale: Consistent visual increase along the entire chromosome
 - Chromosome/Arm: 18, Change: gain, DCR: ~1.5-1.7, Rationale: Consistent visual increase along the entire chromosome""")
 
-        model = "gemini-2.5-flash-preview-05-20"
+        model = "gemini-2.5-flash"
         contents = [
             types.Content(
                 role="user",

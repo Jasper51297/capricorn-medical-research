@@ -71,7 +71,7 @@ const StreamedArticleResults = ({ currentProgress, article, initialExpanded = tr
         <table className="min-w-max bg-white border border-gray-300" style={{ minWidth: '120%' }}>
           <thead>
             <tr>
-              <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">PMID</th>
+              <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">PMCID</th>
               <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Title</th>
               <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Year</th>
               <th className="px-4 py-2 text-xs border-t font-semibold text-gray-600 uppercase tracking-wider bg-gray-100">Type of Cancer</th>
@@ -84,8 +84,8 @@ const StreamedArticleResults = ({ currentProgress, article, initialExpanded = tr
           <tbody>
             <tr>
               <td className="px-4 py-2 text-xs border-t text-gray-500 max-h-20 overflow-y-auto">
-                <a href={`https://pubmed.ncbi.nlm.nih.gov/${article.pmid}/`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                  {article.pmid}
+                <a href={`https://www.ncbi.nlm.nih.gov/pmc/articles/${article.pmcid}/`} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                  {article.pmcid}
                 </a>
               </td>
               <td className="px-4 py-2 text-xs border-t text-gray-500" style={{ maxHeight: '80px', overflowY: 'auto', display: 'block', minWidth: '200px', padding: '8px 16px' }}>{article.title}</td>

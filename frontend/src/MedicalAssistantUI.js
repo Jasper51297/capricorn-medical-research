@@ -50,7 +50,7 @@ const MedicalAssistantUI = () => {
   const [isProcessingArticles, setIsProcessingArticles] = useState(false);
   const [articles, setArticles] = useState([]);
   const [currentProgress, setCurrentProgress] = useState('');
-  const [pmids, setPmids] = useState([]);
+  const [pmcids, setPmcids] = useState([]);
   const [totalArticles, setTotalArticles] = useState(0);
   const [currentArticleData, setCurrentArticleData] = useState(null);
   const [isPromptExpanded, setIsPromptExpanded] = useState(true);
@@ -220,7 +220,7 @@ const handleExtract = async () => {
     setIsBox3Hovered(false);
     setArticles([]);
     setCurrentProgress('');
-    setPmids([]);
+    setPmcids([]);
     setTotalArticles(0);
     setCurrentArticleData(null);
     setIsPromptExpanded(true);
@@ -333,14 +333,14 @@ const handleExtract = async () => {
               }
             }
           }
-          else if (data.type === 'pmids') {
-            setPmids(data.data.pmids);
-            setCurrentProgress('Retrieved PMIDs, creating links...');
+          else if (data.type === 'pmcids') {
+            setPmcids(data.data.pmcids);
+            setCurrentProgress('Retrieved PMCIDs, creating links...');
           }
           else if (data.type === 'article_analysis') {
             const analysis = data.data.analysis.article_metadata;
             const articleData = {
-              pmid: analysis.PMID,
+              pmcid: analysis.PMCID,
               title: analysis.title,
               points: analysis.overall_points,
               content: data.data.analysis.full_article_text,

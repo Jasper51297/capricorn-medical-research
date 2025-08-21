@@ -55,6 +55,25 @@ const CustomTable = ({ children, title, isSpecialTable }) => {
 const CustomTableCell = ({ children, isHeader }) => {
   const content = React.Children.map(children, child => {
     if (typeof child === 'string') {
+      // Handle PMCID links in markdown format [PMCID: PMC12345 (2023)](https://...)
+      if (child.includes('[PMCID:')) {
+        const pmcidMatch = child.match(/\[PMCID:\s*(PMC\d+)\s*\((\d+)\)\]\((https:\/\/[^\)]+)\)/);
+        if (pmcidMatch) {
+          const pmcid = pmcidMatch[1];
+          const year = pmcidMatch[2];
+          const url = pmcidMatch[3];
+          return (
+            <a 
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:text-blue-800 font-medium"
+            >
+              PMCID: {pmcid} ({year})
+            </a>
+          );
+        }
+      }
       // Handle PMID links
       if (child.includes('[PMID:')) {
         const pmidMatch = child.match(/\[PMID:\s*(\d+)\]/);

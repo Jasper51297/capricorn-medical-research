@@ -194,8 +194,8 @@ const handleUserMessage = async ({
           async (data) => {
             if (data.type === 'analysis') {
               await handleAnalysisData(data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId);
-            } else if (data.type === 'pmids') {
-              await handlePmidsData(data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId);
+            } else if (data.type === 'pmcids') {
+              await handlePmcidsData(data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId);
             }
           }
         );
@@ -314,7 +314,7 @@ const handleAnalysisData = async (data, user, currentChatId, setChatHistory, set
   });
 };
 
-const handlePmidsData = async (data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId) => {
+const handlePmcidsData = async (data, user, currentChatId, setChatHistory, setActiveChat, setIsLoadingAnalysis, userId) => {
   setIsLoadingAnalysis(true);
   const timestamp = new Date();
   const messageId = createMessageId('document');

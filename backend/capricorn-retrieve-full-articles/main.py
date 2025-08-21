@@ -178,7 +178,7 @@ def calculate_points(metadata, query_disease=None):
     
     return points, breakdown
 
-def create_gemini_prompt(article_text, pmid, methodology_content=None, disease=None, events_text=None):
+def create_gemini_prompt(article_text, pmcid, methodology_content=None, disease=None, events_text=None):
     # Add disease and events context to the prompt if provided
     disease_context = f"\nThe patient's disease is: {disease}\n" if disease else ""
     events_context = f"\nThe patient's actionable events are: {events_text}\n" if events_text else ""
@@ -190,7 +190,7 @@ def create_gemini_prompt(article_text, pmid, methodology_content=None, disease=N
 
     # Default methodology if none provided
     if not methodology_content:
-        methodology_content = f"""You are an expert pediatric oncologist and you are the chair of the International Leukemia Tumor Board. Your goal is to evaluate full research articles related to oncology, especially those concerning pediatric leukemia, to identify potential advancements in treatment and understanding of the disease.{disease_context}{events_context}
+        methodology_content = """You are an expert pediatric oncologist and you are the chair of the International Leukemia Tumor Board. Your goal is to evaluate full research articles related to oncology, especially those concerning pediatric leukemia, to identify potential advancements in treatment and understanding of the disease.{disease_context}{events_context}
 
 Journal Impact Data (SJR scores):
 The following is a list of journal titles and their SJR scores. When extracting the journal title from the article, find the best matching title from this list and use its SJR score. If no match is found, use 0 as the SJR score.
@@ -261,9 +261,9 @@ Important: The response must be valid JSON and follow this exact structure. Do n
     
     return prompt
 
-def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=None, events_text=None):
+def analyze_with_gemini(article_text, pmcid, methodology_content=None, disease=None, events_text=None):
     # Create prompt with JSON-only instruction
-    prompt = create_gemini_prompt(article_text, pmid, methodology_content, disease, events_text)
+    prompt = create_gemini_prompt(article_text, pmcid, methodology_content, disease, events_text)
     prompt += "\n\nIMPORTANT: Return ONLY the raw JSON object. Do not include any explanatory text, markdown formatting, or code blocks. The response should start with '{' and end with '}' with no other characters before or after."
     
     # Configure Gemini
@@ -363,9 +363,9 @@ def analyze_with_gemini(article_text, pmid, methodology_content=None, disease=No
         # Process metadata and calculate points
         if 'article_metadata' in analysis:
             metadata = analysis['article_metadata']
-            # Add PMID and generate link
-            metadata['PMID'] = pmid
-            metadata['link'] = f'https://pubmed.ncbi.nlm.nih.gov/{pmid}/'
+            # Add PMCID and generate link
+            metadata['PMCID'] = pmcid
+            metadata['link'] = f'https://www.ncbi.nlm.nih.gov/pmc/articles/{pmcid}/'
             
             # Calculate points with disease information
             points, point_breakdown = calculate_points(metadata, disease)
@@ -420,15 +420,15 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
         results = list(query_job.result())
         total_articles = len(results)
         
-        # Get array of PMIDs from BigQuery results and stream immediately
-        retrieved_pmids = [row['PMID'] for row in results]
-        print(f"Retrieved PMIDs: {retrieved_pmids}")
+        # Get array of PMCIDs from BigQuery results and stream immediately
+        retrieved_pmcids = [row['PMCID'] for row in results]
+        print(f"Retrieved PMCIDs: {retrieved_pmcids}")
 
-        # Stream PMIDs immediately
+        # Stream PMCIDs immediately
         yield json.dumps({
-            "type": "pmids",
+            "type": "pmcids",
             "data": {
-                "pmids": retrieved_pmids
+                "pmcids": retrieved_pmcids
             }
         }) + "\n"
 
@@ -449,7 +449,7 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
             content = row['content']
             
             # Log article details before analysis
-            logger.info(f"Processing article:\nPMCID: {pmcid}\nPMID: {pmid}\nContent length: {len(content)}\nFirst 200 chars: {content[:200]}")
+            logger.info(f"Processing article:\nPMCID: {pmcid}\nContent length: {len(content)}\nFirst 200 chars: {content[:200]}")
             
             # Add delay between articles
             if idx > 1:  # Don't delay for first article
@@ -458,8 +458,8 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
             
             # Analyze with Gemini and prepare complete response object
             try:
-                # Pass PMID for URL generation and metadata
-                analysis = analyze_with_gemini(content, pmid, methodology_content, disease, events_text)
+                # Pass PMCID for URL generation and metadata
+                analysis = analyze_with_gemini(content, pmcid, methodology_content, disease, events_text)
                 if analysis:
                     # Create complete response object
                     response_obj = {
@@ -475,22 +475,22 @@ def stream_response(events_text, methodology_content=None, disease=None, num_art
                     # Send complete JSON object with newline
                     yield json.dumps(response_obj) + "\n"
                 else:
-                    logger.error(f"Failed to analyze article {row['PMID']}")
+                    logger.error(f"Failed to analyze article {row['PMCID']}")
                     error_obj = {
                         "type": "error",
                         "data": {
-                            "message": f"Failed to analyze article {row['PMID']}",
+                            "message": f"Failed to analyze article {row['PMCID']}",
                             "article_number": idx,
                             "total_articles": total_articles
                         }
                     }
                     yield json.dumps(error_obj) + "\n"
             except Exception as e:
-                logger.error(f"Error processing article {row['PMID']}: {str(e)}")
+                logger.error(f"Error processing article {row['PMCID']}: {str(e)}")
                 yield json.dumps({
                     "type": "error",
                     "data": {
-                        "message": f"Error processing article {row['PMID']}: {str(e)}",
+                        "message": f"Error processing article {row['PMCID']}: {str(e)}",
                         "article_number": idx,
                         "total_articles": total_articles
                     }
