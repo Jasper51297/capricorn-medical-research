@@ -16,10 +16,16 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
+import { firebasePromise } from './firebase';
+import { apiPromise } from './utils/api';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+
+// Wait for Firebase and API to be initialized before rendering the app
+Promise.all([firebasePromise, apiPromise]).then(() => {
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+});

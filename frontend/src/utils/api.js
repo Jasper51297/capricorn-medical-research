@@ -14,16 +14,27 @@
 
 // src/utils/api.js
 import axios from 'axios';
+import { getConfig } from './config';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL; // This will now be used by the server.js proxy
-const FRONTEND_SERVER_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8080'; // Point to frontend server
+let api;
 
-const api = axios.create({
-  baseURL: FRONTEND_SERVER_BASE_URL, // All requests will now go to the frontend server
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+const initializeApi = async () => {
+  if (!api) {
+    const config = await getConfig();
+    const FRONTEND_SERVER_BASE_URL = config.REACT_APP_API_BASE_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8080');
+    api = axios.create({
+      baseURL: FRONTEND_SERVER_BASE_URL,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+};
+
+// Initialize the api on load
+const apiPromise = initializeApi();
+
+export { api, apiPromise };
 
 export const retrieveAndAnalyzeArticles = async (disease, events, methodologyContent, onProgress, numArticles = 15) => {
   try {

@@ -29,23 +29,33 @@ import {
   getDoc,
   onSnapshot
 } from 'firebase/firestore';
+import { getConfig } from './utils/config';
 
-// Your Firebase configuration object
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.REACT_APP_FIREBASE_APP_ID
+let app;
+let auth;
+let db;
+
+const initializeFirebase = async () => {
+  if (!app) {
+    const config = await getConfig();
+    const firebaseConfig = {
+      apiKey: config.REACT_APP_FIREBASE_API_KEY,
+      authDomain: config.REACT_APP_FIREBASE_AUTH_DOMAIN,
+      projectId: config.REACT_APP_FIREBASE_PROJECT_ID,
+      storageBucket: config.REACT_APP_FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: config.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+      appId: config.REACT_APP_FIREBASE_APP_ID
+    };
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app, config.REACT_APP_FIREBASE_DATABASE_ID || "capricorn-eu");
+  }
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase on load
+const firebasePromise = initializeFirebase();
 
-// Get Auth and Firestore instances
-export const auth = getAuth(app);
-export const db = getFirestore(app, process.env.REACT_APP_FIREBASE_DATABASE_ID || "capricorn-eu");
+export { auth, db, firebasePromise };
 
 // Helper functions for chat operations
 // In firebase.js
@@ -160,4 +170,6 @@ export const getChatDocumentsRealTime = (userId, callback) => {
   });
 };
 
-export default app;
+// Export the initialized app if needed, but it's better to export the promise
+// to ensure initialization is complete before use.
+export default firebasePromise;
