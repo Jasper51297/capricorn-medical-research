@@ -23,6 +23,7 @@ const fetchConfig = async () => {
       console.error('Error fetching config:', error);
       // Fallback to process.env for local development
       config = {
+        REACT_APP_FRONTEND_SERVER_URL: process.env.REACT_APP_FRONTEND_SERVER_URL,
         REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL,
         REACT_APP_FIREBASE_API_KEY: process.env.REACT_APP_FIREBASE_API_KEY,
         REACT_APP_FIREBASE_AUTH_DOMAIN: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,

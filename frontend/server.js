@@ -50,6 +50,7 @@ app.get('/api/config', async (req, res) => {
       };
 
       const config = {
+        REACT_APP_FRONTEND_SERVER_URL: await getMetadata('REACT_APP_FRONTEND_SERVER_URL'),
         REACT_APP_API_BASE_URL: await getMetadata('REACT_APP_API_BASE_URL'),
         REACT_APP_FIREBASE_API_KEY: await getMetadata('REACT_APP_FIREBASE_API_KEY'),
         REACT_APP_FIREBASE_AUTH_DOMAIN: await getMetadata('REACT_APP_FIREBASE_AUTH_DOMAIN'),
@@ -67,6 +68,7 @@ app.get('/api/config', async (req, res) => {
   } else {
     // Fallback for local development
     res.json({
+      REACT_APP_FRONTEND_SERVER_URL: process.env.REACT_APP_FRONTEND_SERVER_URL,
       REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL,
       REACT_APP_FIREBASE_API_KEY: process.env.REACT_APP_FIREBASE_API_KEY,
       REACT_APP_FIREBASE_AUTH_DOMAIN: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,

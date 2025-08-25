@@ -21,7 +21,7 @@ let api;
 const initializeApi = async () => {
   if (!api) {
     const config = await getConfig();
-    const FRONTEND_SERVER_BASE_URL = config.REACT_APP_API_BASE_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8080');
+    const FRONTEND_SERVER_BASE_URL = config.REACT_APP_FRONTEND_SERVER_URL || (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8080');
     api = axios.create({
       baseURL: FRONTEND_SERVER_BASE_URL,
       headers: {
