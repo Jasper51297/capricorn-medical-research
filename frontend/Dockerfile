@@ -20,4 +20,4 @@ RUN npm run build
 EXPOSE 8080
 
 # Run the app when the container launches
-CMD ["npm", "start"]
+CMD ["npm", "run", "serve"]
