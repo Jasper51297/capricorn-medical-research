@@ -41,32 +41,42 @@ app.use(cors(corsOptions));
 app.get('/api/config', async (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     try {
-      const getMetadata = async (variable) => {
-        const url = `http://metadata.google.internal/computeMetadata/v1/instance/attributes/${variable}`;
-        const response = await axios.get(url, {
-          headers: { 'Metadata-Flavor': 'Google' },
-        });
-        return response.data;
+      // Fetch all metadata attributes in a single, robust request.
+      const metadataUrl = 'http://metadata.google.internal/computeMetadata/v1/instance/attributes/?recursive=true';
+      const response = await axios.get(metadataUrl, {
+        headers: { 'Metadata-Flavor': 'Google' },
+        // Add a timeout to prevent the request from hanging indefinitely
+        timeout: 5000 // 5 seconds
+      });
+
+      const attributes = response.data;
+
+      // Construct the config object directly from the fetched attributes.
+      const config = {
+        REACT_APP_FRONTEND_SERVER_URL: attributes.REACT_APP_FRONTEND_SERVER_URL,
+        REACT_APP_API_BASE_URL: attributes.REACT_APP_API_BASE_URL,
+        REACT_APP_FIREBASE_API_KEY: attributes.REACT_APP_FIREBASE_API_KEY,
+        REACT_APP_FIREBASE_AUTH_DOMAIN: attributes.REACT_APP_FIREBASE_AUTH_DOMAIN,
+        REACT_APP_FIREBASE_PROJECT_ID: attributes.REACT_APP_FIREBASE_PROJECT_ID,
+        REACT_APP_FIREBASE_STORAGE_BUCKET: attributes.REACT_APP_FIREBASE_STORAGE_BUCKET,
+        REACT_APP_FIREBASE_MESSAGING_SENDER_ID: attributes.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+        REACT_APP_FIREBASE_APP_ID: attributes.REACT_APP_FIREBASE_APP_ID,
+        REACT_APP_FIREBASE_MEASUREMENT_ID: attributes.REACT_APP_FIREBASE_MEASUREMENT_ID,
       };
 
-      const config = {
-        REACT_APP_FRONTEND_SERVER_URL: await getMetadata('REACT_APP_FRONTEND_SERVER_URL'),
-        REACT_APP_API_BASE_URL: await getMetadata('REACT_APP_API_BASE_URL'),
-        REACT_APP_FIREBASE_API_KEY: await getMetadata('REACT_APP_FIREBASE_API_KEY'),
-        REACT_APP_FIREBASE_AUTH_DOMAIN: await getMetadata('REACT_APP_FIREBASE_AUTH_DOMAIN'),
-        REACT_APP_FIREBASE_PROJECT_ID: await getMetadata('REACT_APP_FIREBASE_PROJECT_ID'),
-        REACT_APP_FIREBASE_STORAGE_BUCKET: await getMetadata('REACT_APP_FIREBASE_STORAGE_BUCKET'),
-        REACT_APP_FIREBASE_MESSAGING_SENDER_ID: await getMetadata('REACT_APP_FIREBASE_MESSAGING_SENDER_ID'),
-        REACT_APP_FIREBASE_APP_ID: await getMetadata('REACT_APP_FIREBASE_APP_ID'),
-        REACT_APP_FIREBASE_MEASUREMENT_ID: await getMetadata('REACT_APP_FIREBASE_MEASUREMENT_ID'),
-      };
+      // Essential configuration check to ensure the server can function.
+      if (!config.REACT_APP_API_BASE_URL || !config.REACT_APP_FIREBASE_API_KEY) {
+        console.error('FATAL: A required configuration value was not found in metadata attributes.');
+        return res.status(500).send('Server configuration is incomplete.');
+      }
+
       res.json(config);
     } catch (error) {
-      console.error('Error fetching metadata from Google Cloud:', error.message);
-      res.status(500).send('Error fetching configuration');
+      console.error('FATAL: Could not fetch configuration from metadata server.', error.message);
+      res.status(500).send('Error fetching server configuration.');
     }
   } else {
-    // Fallback for local development
+    // Fallback for local development using environment variables
     res.json({
       REACT_APP_FRONTEND_SERVER_URL: process.env.REACT_APP_FRONTEND_SERVER_URL,
       REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL,
