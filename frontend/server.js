@@ -38,17 +38,45 @@ const corsOptions = {
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
-app.get('/api/config', (req, res) => {
-  res.json({
-    REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL,
-    REACT_APP_FIREBASE_API_KEY: process.env.REACT_APP_FIREBASE_API_KEY,
-    REACT_APP_FIREBASE_AUTH_DOMAIN: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
-    REACT_APP_FIREBASE_PROJECT_ID: process.env.REACT_APP_FIREBASE_PROJECT_ID,
-    REACT_APP_FIREBASE_STORAGE_BUCKET: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
-    REACT_APP_FIREBASE_MESSAGING_SENDER_ID: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
-    REACT_APP_FIREBASE_APP_ID: process.env.REACT_APP_FIREBASE_APP_ID,
-    REACT_APP_FIREBASE_MEASUREMENT_ID: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
-  });
+app.get('/api/config', async (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    try {
+      const getMetadata = async (variable) => {
+        const url = `http://metadata.google.internal/computeMetadata/v1/instance/attributes/${variable}`;
+        const response = await axios.get(url, {
+          headers: { 'Metadata-Flavor': 'Google' },
+        });
+        return response.data;
+      };
+
+      const config = {
+        REACT_APP_API_BASE_URL: await getMetadata('REACT_APP_API_BASE_URL'),
+        REACT_APP_FIREBASE_API_KEY: await getMetadata('REACT_APP_FIREBASE_API_KEY'),
+        REACT_APP_FIREBASE_AUTH_DOMAIN: await getMetadata('REACT_APP_FIREBASE_AUTH_DOMAIN'),
+        REACT_APP_FIREBASE_PROJECT_ID: await getMetadata('REACT_APP_FIREBASE_PROJECT_ID'),
+        REACT_APP_FIREBASE_STORAGE_BUCKET: await getMetadata('REACT_APP_FIREBASE_STORAGE_BUCKET'),
+        REACT_APP_FIREBASE_MESSAGING_SENDER_ID: await getMetadata('REACT_APP_FIREBASE_MESSAGING_SENDER_ID'),
+        REACT_APP_FIREBASE_APP_ID: await getMetadata('REACT_APP_FIREBASE_APP_ID'),
+        REACT_APP_FIREBASE_MEASUREMENT_ID: await getMetadata('REACT_APP_FIREBASE_MEASUREMENT_ID'),
+      };
+      res.json(config);
+    } catch (error) {
+      console.error('Error fetching metadata from Google Cloud:', error.message);
+      res.status(500).send('Error fetching configuration');
+    }
+  } else {
+    // Fallback for local development
+    res.json({
+      REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL,
+      REACT_APP_FIREBASE_API_KEY: process.env.REACT_APP_FIREBASE_API_KEY,
+      REACT_APP_FIREBASE_AUTH_DOMAIN: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+      REACT_APP_FIREBASE_PROJECT_ID: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+      REACT_APP_FIREBASE_STORAGE_BUCKET: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+      REACT_APP_FIREBASE_MESSAGING_SENDER_ID: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+      REACT_APP_FIREBASE_APP_ID: process.env.REACT_APP_FIREBASE_APP_ID,
+      REACT_APP_FIREBASE_MEASUREMENT_ID: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
+    });
+  }
 });
 
 // Serve static files from the React app build directory

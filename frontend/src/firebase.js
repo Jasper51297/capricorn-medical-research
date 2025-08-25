@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // src/firebase.js
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, signInAnonymously } from 'firebase/auth';
 import { 
   getFirestore, 
@@ -36,8 +36,9 @@ let auth;
 let db;
 
 const initializeFirebase = async () => {
-  if (!app) {
-    const config = await getConfig();
+  const config = await getConfig();
+
+  if (getApps().length === 0) {
     const firebaseConfig = {
       apiKey: config.REACT_APP_FIREBASE_API_KEY,
       authDomain: config.REACT_APP_FIREBASE_AUTH_DOMAIN,
@@ -47,9 +48,12 @@ const initializeFirebase = async () => {
       appId: config.REACT_APP_FIREBASE_APP_ID
     };
     app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app, config.REACT_APP_FIREBASE_DATABASE_ID || "capricorn-eu");
+  } else {
+    app = getApp();
   }
+
+  auth = getAuth(app);
+  db = getFirestore(app, config.REACT_APP_FIREBASE_DATABASE_ID || "capricorn-eu");
 };
 
 // Initialize Firebase on load
