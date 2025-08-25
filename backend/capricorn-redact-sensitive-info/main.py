@@ -210,7 +210,7 @@ def calculate_age(birth_date):
 def deidentify_content(project_id, text):
     """Deidentify sensitive content using DLP API and Gemini for date processing."""
     if not text:
-        return text
+        return text, None
 
     print(f"Original text: {text}")
 
@@ -291,10 +291,11 @@ def deidentify_content(project_id, text):
             print("  No transformation overview available in the response.")
 
         print(f"Final redacted text: {deidentify_response.item.value}")
-        return deidentify_response.item.value
+        return deidentify_response.item.value, None
     except Exception as e:
-        print(f"Error in deidentify_content: {str(e)}")
-        return None  # Return None instead of raising an exception
+        error_message = f"Error in deidentify_content: {str(e)}"
+        print(error_message)
+        return None, error_message
 
 
 @functions_framework.http
@@ -341,7 +342,7 @@ def redact_sensitive_info(request):
 
         # Redact sensitive information using project ID from environment
         project_id = os.environ.get('DLP_PROJECT_ID', os.environ.get('PROJECT_ID', 'gemini-med-lit-review'))
-        redacted_text = deidentify_content(project_id, text)
+        redacted_text, error_message = deidentify_content(project_id, text)
 
         # Restore original print function
         builtins.print = original_print
@@ -349,7 +350,7 @@ def redact_sensitive_info(request):
         if redacted_text is None:
             return jsonify({
                 'success': False,
-                'error': 'Failed to redact text',
+                'error': error_message or 'Failed to redact text',
                 'debugInfo': debug_info
             }), 500, headers
 
@@ -387,8 +388,11 @@ if __name__ == "__main__":
     for i, text in enumerate(test_texts, 1):
         print(f"\nTest Case {i}:")
         print(f"Original text: {text}")
-        result = deidentify_content("gemini-med-lit-review", text)
-        print(f"Redacted text: {result}")
+        result, error = deidentify_content("gemini-med-lit-review", text)
+        if error:
+            print(f"Error: {error}")
+        else:
+            print(f"Redacted text: {result}")
         print("=" * 50)
 
     # Run the Flask app
