@@ -15,11 +15,11 @@
 // src/utils/api.js
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-const GENERATE_CASE_URL = process.env.REACT_APP_GENERATE_CASE_URL;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL; // This will now be used by the server.js proxy
+const FRONTEND_SERVER_BASE_URL = process.env.K_REVISION ? '' : 'http://localhost:8080'; // Point to frontend server
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: FRONTEND_SERVER_BASE_URL, // All requests will now go to the frontend server
   headers: {
     'Content-Type': 'application/json',
   },
@@ -163,11 +163,8 @@ export const extractEvents = async (text, promptContent) => {
  */
 export const generateSampleCase = async () => {
   try {
-    const response = await axios.get(GENERATE_CASE_URL, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    // Now proxied through the frontend server
+    const response = await api.get('/generate-sample-case');
     return response.data.medical_case;
   } catch (error) {
     console.error('Error generating sample case:', error);
