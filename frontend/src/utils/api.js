@@ -167,7 +167,6 @@ export const generateSampleCase = async () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      withCredentials: true,
     });
     return response.data.medical_case;
   } catch (error) {
@@ -184,7 +183,6 @@ export const generateSampleCase = async () => {
 export const saveTemplate = async (template) => {
   try {
     const response = await api.post('/templates', template, {
-      withCredentials: true,
     });
     return response.data.template;
   } catch (error) {
@@ -200,7 +198,6 @@ export const saveTemplate = async (template) => {
 export const fetchTemplates = async () => {
   try {
     const response = await api.get('/templates', {
-      withCredentials: true,
     });
     return response.data.templates;
   } catch (error) {
@@ -217,7 +214,6 @@ export const fetchTemplates = async () => {
 export const deleteTemplate = async (templateId) => {
   try {
     await api.delete(`/templates/${templateId}`, {
-      withCredentials: true,
     });
   } catch (error) {
     console.error('Error deleting template:', error);
