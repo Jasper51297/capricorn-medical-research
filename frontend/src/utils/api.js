@@ -16,7 +16,7 @@
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL; // This will now be used by the server.js proxy
-const FRONTEND_SERVER_BASE_URL = process.env.K_REVISION ? '' : 'http://localhost:8080'; // Point to frontend server
+const FRONTEND_SERVER_BASE_URL = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8080'; // Point to frontend server
 
 const api = axios.create({
   baseURL: FRONTEND_SERVER_BASE_URL, // All requests will now go to the frontend server
